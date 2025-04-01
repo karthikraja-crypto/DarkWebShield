@@ -1,6 +1,6 @@
 
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useContext } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Shield, Menu, X, User, LogOut, Settings, CreditCard } from 'lucide-react';
 import { 
@@ -12,14 +12,26 @@ import {
   DropdownMenuTrigger 
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { AuthContext } from '../App';
+import { toast } from 'sonner';
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
-  const [isLoggedIn, setIsLoggedIn] = React.useState(false); // Mock authentication state
+  const { isLoggedIn, user, logout } = useContext(AuthContext);
+  const navigate = useNavigate();
 
-  // For demo purposes, toggle login state
-  const toggleLogin = () => {
-    setIsLoggedIn(!isLoggedIn);
+  const handleLogout = () => {
+    logout();
+    toast.success('You have been logged out');
+    navigate('/');
+  };
+
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map(part => part[0])
+      .join('')
+      .toUpperCase();
   };
 
   return (
@@ -56,21 +68,25 @@ const Navbar = () => {
             About
           </Link>
           
-          {isLoggedIn ? (
+          {isLoggedIn && user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-10 w-10 rounded-full">
                   <Avatar className="h-10 w-10 border border-cyber-primary/30">
-                    <AvatarImage src="" />
-                    <AvatarFallback className="bg-cyber-primary/10 text-cyber-primary">JD</AvatarFallback>
+                    {user.avatar ? (
+                      <AvatarImage src={user.avatar} alt={user.name} />
+                    ) : null}
+                    <AvatarFallback className="bg-cyber-primary/10 text-cyber-primary">
+                      {user.name ? getInitials(user.name) : 'U'}
+                    </AvatarFallback>
                   </Avatar>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent className="w-56" align="end">
                 <DropdownMenuLabel>
                   <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium">John Doe</p>
-                    <p className="text-xs text-muted-foreground">john.doe@example.com</p>
+                    <p className="text-sm font-medium">{user.name}</p>
+                    <p className="text-xs text-muted-foreground">{user.email}</p>
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
@@ -87,13 +103,13 @@ const Navbar = () => {
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link to="/subscription" className="cursor-pointer flex items-center">
-                    <CreditCard className="mr-2 h-4 w-4" />
-                    <span>Subscription</span>
+                  <Link to="/scan" className="cursor-pointer flex items-center">
+                    <Shield className="mr-2 h-4 w-4" />
+                    <span>New Scan</span>
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={toggleLogin} className="cursor-pointer text-cyber-danger">
+                <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-cyber-danger">
                   <LogOut className="mr-2 h-4 w-4" />
                   <span>Log out</span>
                 </DropdownMenuItem>
@@ -111,10 +127,6 @@ const Navbar = () => {
                   Sign Up
                 </Button>
               </Link>
-              {/* For demo purposes - toggle login state */}
-              <Button variant="ghost" size="icon" onClick={toggleLogin} className="ml-2">
-                <User className="h-5 w-5" />
-              </Button>
             </div>
           )}
         </div>
@@ -152,15 +164,20 @@ const Navbar = () => {
             About
           </Link>
           
-          {isLoggedIn ? (
+          {isLoggedIn && user ? (
             <>
               <div className="p-2 flex items-center gap-3 border-t border-cyber-primary/20 pt-3">
                 <Avatar className="h-10 w-10 border border-cyber-primary/30">
-                  <AvatarFallback className="bg-cyber-primary/10 text-cyber-primary">JD</AvatarFallback>
+                  {user.avatar ? (
+                    <AvatarImage src={user.avatar} alt={user.name} />
+                  ) : null}
+                  <AvatarFallback className="bg-cyber-primary/10 text-cyber-primary">
+                    {user.name ? getInitials(user.name) : 'U'}
+                  </AvatarFallback>
                 </Avatar>
                 <div>
-                  <p className="text-sm font-medium">John Doe</p>
-                  <p className="text-xs text-muted-foreground">john.doe@example.com</p>
+                  <p className="text-sm font-medium">{user.name}</p>
+                  <p className="text-xs text-muted-foreground">{user.email}</p>
                 </div>
               </div>
               <div className="pt-2">
@@ -168,7 +185,7 @@ const Navbar = () => {
                   variant="ghost" 
                   className="w-full justify-start text-cyber-danger"
                   onClick={() => {
-                    toggleLogin();
+                    handleLogout();
                     setIsMenuOpen(false);
                   }}
                 >
@@ -189,18 +206,6 @@ const Navbar = () => {
                   Sign Up
                 </Button>
               </Link>
-              {/* For demo purposes */}
-              <Button 
-                variant="ghost" 
-                className="w-full justify-center"
-                onClick={() => {
-                  toggleLogin();
-                  setIsMenuOpen(false);
-                }}
-              >
-                <User className="mr-2 h-4 w-4" />
-                <span>Demo Login</span>
-              </Button>
             </div>
           )}
         </div>

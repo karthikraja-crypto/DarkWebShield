@@ -1,6 +1,6 @@
 
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useContext, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -9,15 +9,54 @@ import { toast } from 'sonner';
 import { Shield, Mail, Lock } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import { AuthContext } from '../App';
 
 const Login = () => {
-  const handleSubmit = (e: React.FormEvent) => {
+  const { login } = useContext(AuthContext);
+  const navigate = useNavigate();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    toast.success('Login successful! Redirecting to dashboard...');
-    // In a real app, would handle authentication and redirection
+    setIsLoading(true);
+    
+    try {
+      // For demo purposes - in a real app would call an API
+      setTimeout(() => {
+        // Mock successful login
+        login({
+          name: 'John Doe',
+          email: email,
+        });
+        
+        toast.success('Login successful! Redirecting to dashboard...');
+        navigate('/dashboard');
+        setIsLoading(false);
+      }, 1000);
+    } catch (error) {
+      toast.error('Login failed. Please check your credentials.');
+      setIsLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = () => {
+    setIsLoading(true);
+    
+    // For demo purposes - in a real app would use OAuth
     setTimeout(() => {
-      window.location.href = '/dashboard';
-    }, 1500);
+      // Mock successful Google login
+      login({
+        name: 'John Doe',
+        email: 'john.doe@example.com',
+        avatar: 'https://api.dicebear.com/6.x/micah/svg?seed=John',
+      });
+      
+      toast.success('Google login successful! Redirecting to dashboard...');
+      navigate('/dashboard');
+      setIsLoading(false);
+    }, 1000);
   };
 
   return (
@@ -56,6 +95,8 @@ const Login = () => {
                         placeholder="Enter your email" 
                         className="cyber-input pl-10" 
                         required 
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
                       />
                     </div>
                   </div>
@@ -77,6 +118,8 @@ const Login = () => {
                         placeholder="Enter your password" 
                         className="cyber-input pl-10" 
                         required 
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
                       />
                     </div>
                   </div>
@@ -84,8 +127,9 @@ const Login = () => {
                   <Button 
                     type="submit" 
                     className="w-full bg-cyber-primary text-cyber-dark hover:bg-cyber-primary/80"
+                    disabled={isLoading}
                   >
-                    Log In
+                    {isLoading ? 'Logging in...' : 'Log In'}
                   </Button>
                 </form>
               </CardContent>
@@ -106,8 +150,13 @@ const Login = () => {
                   </div>
                 </div>
                 
-                <div className="grid grid-cols-2 gap-4">
-                  <Button variant="outline" className="cyber-input flex gap-2">
+                <div className="grid gap-4">
+                  <Button 
+                    variant="outline" 
+                    className="cyber-input flex gap-2 w-full"
+                    onClick={handleGoogleLogin}
+                    disabled={isLoading}
+                  >
                     <svg className="w-5 h-5" viewBox="0 0 24 24">
                       <path
                         d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -126,13 +175,7 @@ const Login = () => {
                         fill="#EA4335"
                       />
                     </svg>
-                    Google
-                  </Button>
-                  <Button variant="outline" className="cyber-input flex gap-2">
-                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z" />
-                    </svg>
-                    Facebook
+                    Continue with Google
                   </Button>
                 </div>
               </CardFooter>
