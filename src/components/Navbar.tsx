@@ -2,7 +2,7 @@
 import React, { useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Shield, Menu, X, User, LogOut, Settings, CreditCard } from 'lucide-react';
+import { Shield, Menu, X, User, LogOut, Settings, CreditCard, Home } from 'lucide-react';
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -55,6 +55,12 @@ const Navbar = () => {
 
         {/* Desktop Navigation */}
         <div className="hidden md:flex items-center gap-6">
+          <Link to="/" className="text-sm font-medium text-foreground hover:text-cyber-primary transition-colors">
+            <div className="flex items-center gap-1">
+              <Home className="h-4 w-4" />
+              <span>Home</span>
+            </div>
+          </Link>
           <Link to="/dashboard" className="text-sm font-medium text-foreground hover:text-cyber-primary transition-colors">
             Dashboard
           </Link>
@@ -135,6 +141,16 @@ const Navbar = () => {
       {/* Mobile Menu */}
       {isMenuOpen && (
         <div className="md:hidden absolute top-full left-0 right-0 bg-cyber-dark border-b border-cyber-primary/20 py-4 px-4 space-y-3">
+          <Link 
+            to="/" 
+            className="block p-2 text-sm font-medium text-foreground hover:bg-cyber-primary/10 rounded-md"
+            onClick={() => setIsMenuOpen(false)}
+          >
+            <div className="flex items-center gap-2">
+              <Home className="h-4 w-4" />
+              <span>Home</span>
+            </div>
+          </Link>
           <Link 
             to="/dashboard" 
             className="block p-2 text-sm font-medium text-foreground hover:bg-cyber-primary/10 rounded-md"

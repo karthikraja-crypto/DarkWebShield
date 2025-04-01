@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
@@ -85,14 +84,7 @@ const Index = () => {
                 </div>
               )}
               
-              <div className="relative">
-                <div className="absolute -inset-0.5 bg-gradient-to-r from-cyber-primary/30 to-cyber-primary opacity-75 blur rounded-lg"></div>
-                <img 
-                  src="/placeholder.svg" 
-                  alt="Dark web monitoring dashboard" 
-                  className="relative rounded-lg border border-cyber-primary/20 w-full h-auto shadow-glow" 
-                />
-              </div>
+              {/* Image has been removed as requested */}
             </div>
           </div>
         </section>
