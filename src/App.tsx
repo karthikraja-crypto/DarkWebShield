@@ -11,6 +11,7 @@ import Scan from "./pages/Scan";
 import Results from "./pages/Results";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
+import Settings from "./pages/Settings";
 import About from "./pages/About";
 import NotFound from "./pages/NotFound";
 
@@ -32,6 +33,7 @@ const App = () => {
               <Route path="/results" element={<Results />} />
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<Signup />} />
+              <Route path="/settings" element={<Settings />} />
               <Route path="/about" element={<About />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
