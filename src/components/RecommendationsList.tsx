@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { AlertTriangle, Shield, Lock, FileKey, KeyRound, MailCheck, User, CheckCircle2 } from 'lucide-react';
 
-interface Recommendation {
+export interface Recommendation {
   id: string;
   title: string;
   description: string;

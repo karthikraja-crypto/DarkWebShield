@@ -9,7 +9,7 @@ import { Shield, AlertTriangle, Info, Check, ChevronLeft, Download } from 'lucid
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import BreachCard, { BreachData } from '@/components/BreachCard';
-import RecommendationsList from '@/components/RecommendationsList';
+import RecommendationsList, { Recommendation } from '@/components/RecommendationsList';
 
 interface ScanResult {
   scanType: string;
@@ -47,7 +47,7 @@ const Results = () => {
   ]);
   
   // Mock recommendations
-  const [recommendations, setRecommendations] = useState([
+  const [recommendations, setRecommendations] = useState<Recommendation[]>([
     {
       id: '1',
       title: 'Change Password Immediately',

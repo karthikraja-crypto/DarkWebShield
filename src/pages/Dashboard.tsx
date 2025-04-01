@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -9,7 +8,7 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import SecurityScoreCard from '@/components/SecurityScoreCard';
 import BreachCard, { BreachData } from '@/components/BreachCard';
-import RecommendationsList from '@/components/RecommendationsList';
+import RecommendationsList, { Recommendation } from '@/components/RecommendationsList';
 
 const Dashboard = () => {
   // Mock data
@@ -43,7 +42,7 @@ const Dashboard = () => {
   ]);
   
   // Mock recommendations
-  const [recommendations, setRecommendations] = useState([
+  const [recommendations, setRecommendations] = useState<Recommendation[]>([
     {
       id: '1',
       title: 'Enable Two-Factor Authentication',
