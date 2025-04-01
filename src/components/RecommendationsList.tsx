@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -96,16 +95,6 @@ const RecommendationsList: React.FC<RecommendationsListProps> = ({
                     </Badge>
                   </div>
                   <p className="text-sm text-muted-foreground">{recommendation.description}</p>
-                  
-                  {!recommendation.completed && onComplete && (
-                    <button 
-                      onClick={() => onComplete(recommendation.id)}
-                      className="mt-2 text-xs text-cyber-primary hover:text-cyber-primary/80 flex items-center gap-1"
-                    >
-                      <CheckCircle2 className="h-3 w-3" />
-                      Mark as completed
-                    </button>
-                  )}
                 </div>
               </div>
             </li>
