@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, createContext } from 'react';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -15,20 +15,36 @@ import Settings from "./pages/Settings";
 import About from "./pages/About";
 import NotFound from "./pages/NotFound";
 
-// Create a client
+// Create a query client
 const queryClient = new QueryClient();
 
-// Simple auth context for demo purposes
-export const AuthContext = React.createContext({
+// Define user type
+type User = {
+  name: string;
+  email: string;
+  avatar?: string;
+};
+
+// Define auth context type
+type AuthContextType = {
+  isLoggedIn: boolean;
+  login: (userData: User) => void;
+  logout: () => void;
+  user: User | null;
+};
+
+// Create auth context with default values
+export const AuthContext = createContext<AuthContextType>({
   isLoggedIn: false,
   login: () => {},
   logout: () => {},
-  user: null as { name: string; email: string; avatar?: string } | null
+  user: null
 });
 
-const App = () => {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [user, setUser] = useState<{ name: string; email: string; avatar?: string } | null>(null);
+// App component
+const App: React.FC = () => {
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
+  const [user, setUser] = useState<User | null>(null);
 
   // Check login status on mount
   useEffect(() => {
@@ -42,7 +58,7 @@ const App = () => {
   }, []);
 
   // Login function that will be used across the app
-  const login = (userData: { name: string; email: string; avatar?: string }) => {
+  const login = (userData: User) => {
     setIsLoggedIn(true);
     setUser(userData);
     localStorage.setItem('isLoggedIn', 'true');
@@ -62,38 +78,36 @@ const App = () => {
   };
 
   return (
-    <React.StrictMode>
-      <QueryClientProvider client={queryClient}>
-        <AuthContext.Provider value={{ isLoggedIn, login, logout, user }}>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <BrowserRouter>
-              <Routes>
-                <Route path="/" element={<Index />} />
-                <Route path="/dashboard" element={
-                  isLoggedIn ? <Dashboard /> : <Navigate to="/login" replace />
-                } />
-                <Route path="/scan" element={
-                  isLoggedIn ? <Scan /> : <Navigate to="/login" replace />
-                } />
-                <Route path="/results" element={
-                  isLoggedIn ? <Results /> : <Navigate to="/login" replace />
-                } />
-                <Route path="/login" element={<Login />} />
-                <Route path="/signup" element={<Signup />} />
-                <Route path="/settings" element={
-                  isLoggedIn ? <Settings /> : <Navigate to="/login" replace />
-                } />
-                <Route path="/about" element={<About />} />
-                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </BrowserRouter>
-          </TooltipProvider>
-        </AuthContext.Provider>
-      </QueryClientProvider>
-    </React.StrictMode>
+    <QueryClientProvider client={queryClient}>
+      <AuthContext.Provider value={{ isLoggedIn, login, logout, user }}>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/dashboard" element={
+                isLoggedIn ? <Dashboard /> : <Navigate to="/login" replace />
+              } />
+              <Route path="/scan" element={
+                isLoggedIn ? <Scan /> : <Navigate to="/login" replace />
+              } />
+              <Route path="/results" element={
+                isLoggedIn ? <Results /> : <Navigate to="/login" replace />
+              } />
+              <Route path="/login" element={<Login />} />
+              <Route path="/signup" element={<Signup />} />
+              <Route path="/settings" element={
+                isLoggedIn ? <Settings /> : <Navigate to="/login" replace />
+              } />
+              <Route path="/about" element={<About />} />
+              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
+      </AuthContext.Provider>
+    </QueryClientProvider>
   );
 };
 
