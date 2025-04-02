@@ -1,3 +1,4 @@
+
 import React, { useContext, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -152,7 +153,7 @@ const Login = () => {
                 <div className="grid gap-4">
                   <Button 
                     variant="outline" 
-                    className="cyber-input flex gap-2 w-full"
+                    className="cyber-input flex gap-2 w-full bg-white text-black hover:bg-gray-100"
                     onClick={handleGoogleLogin}
                     disabled={isLoading}
                   >

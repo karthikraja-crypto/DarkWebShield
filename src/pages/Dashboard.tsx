@@ -3,7 +3,23 @@ import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Shield, ChevronRight, AlertTriangle, Check, History } from 'lucide-react';
+import { 
+  Shield, 
+  ChevronRight, 
+  AlertTriangle, 
+  Check, 
+  History, 
+  X 
+} from 'lucide-react';
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogDescription, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogClose 
+} from '@/components/ui/dialog';
+import { toast } from 'sonner';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import SecurityScoreCard from '@/components/SecurityScoreCard';
@@ -102,11 +118,58 @@ const Dashboard = () => {
     }
   ]);
   
+  // New state for the selected scan details
+  const [selectedScan, setSelectedScan] = useState<{
+    id: string;
+    date: string;
+    type: string;
+    value: string;
+    breachesFound: number;
+    details?: string;
+  } | null>(null);
+  
+  // New state for the scan details dialog
+  const [scanDetailsOpen, setScanDetailsOpen] = useState(false);
+  
   // Handle mark recommendation as completed
   const handleCompleteRecommendation = (id: string) => {
     setRecommendations(recommendations.map(rec => 
       rec.id === id ? { ...rec, completed: true } : rec
     ));
+  };
+
+  // Handle view scan details
+  const handleViewScanDetails = (scan: any) => {
+    setSelectedScan({
+      ...scan,
+      details: scan.breachesFound > 0 
+        ? `This scan detected ${scan.breachesFound} data breach${scan.breachesFound === 1 ? '' : 'es'} associated with your ${scan.type.toLowerCase()}. The affected information may include personal details, credentials, or other sensitive data.`
+        : "No data breaches were found associated with this identifier. Your information appears to be secure."
+    });
+    setScanDetailsOpen(true);
+  };
+
+  // Handle quick actions
+  const handleQuickAction = (action: string) => {
+    switch(action) {
+      case 'scan':
+        toast.info('Starting a new security scan...');
+        setTimeout(() => {
+          toast.success('Scan completed successfully!');
+        }, 2000);
+        break;
+      case 'alerts':
+        toast.success('Alert notifications have been configured');
+        break;
+      case 'monitor':
+        toast.success('Continuous monitoring has been activated');
+        break;
+      case 'history':
+        toast.info('Viewing your scan history');
+        break;
+      default:
+        break;
+    }
   };
 
   return (
@@ -141,81 +204,85 @@ const Dashboard = () => {
                   <CardDescription>Tools to safeguard your digital identity</CardDescription>
                 </CardHeader>
                 <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <Link to="/scan">
-                    <div className="cyber-card p-4 hover:bg-cyber-primary/5 transition-colors cursor-pointer">
-                      <div className="flex justify-between items-center">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full bg-cyber-primary/10 flex items-center justify-center">
-                            <Shield className="h-5 w-5 text-cyber-primary" />
-                          </div>
-                          <div>
-                            <h3 className="font-medium">Start New Scan</h3>
-                            <p className="text-xs text-muted-foreground">
-                              Check for new leaked data
-                            </p>
-                          </div>
+                  <div 
+                    className="cyber-card p-4 hover:bg-cyber-primary/5 transition-colors cursor-pointer"
+                    onClick={() => handleQuickAction('scan')}
+                  >
+                    <div className="flex justify-between items-center">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-cyber-primary/10 flex items-center justify-center">
+                          <Shield className="h-5 w-5 text-cyber-primary" />
                         </div>
-                        <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                        <div>
+                          <h3 className="font-medium">Start New Scan</h3>
+                          <p className="text-xs text-muted-foreground">
+                            Check for new leaked data
+                          </p>
+                        </div>
                       </div>
+                      <ChevronRight className="h-5 w-5 text-muted-foreground" />
                     </div>
-                  </Link>
+                  </div>
                   
-                  <Link to="/alerts">
-                    <div className="cyber-card p-4 hover:bg-cyber-primary/5 transition-colors cursor-pointer">
-                      <div className="flex justify-between items-center">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full bg-cyber-warning/10 flex items-center justify-center">
-                            <AlertTriangle className="h-5 w-5 text-cyber-warning" />
-                          </div>
-                          <div>
-                            <h3 className="font-medium">Configure Alerts</h3>
-                            <p className="text-xs text-muted-foreground">
-                              Set up breach notifications
-                            </p>
-                          </div>
+                  <div 
+                    className="cyber-card p-4 hover:bg-cyber-primary/5 transition-colors cursor-pointer"
+                    onClick={() => handleQuickAction('alerts')}
+                  >
+                    <div className="flex justify-between items-center">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-cyber-warning/10 flex items-center justify-center">
+                          <AlertTriangle className="h-5 w-5 text-cyber-warning" />
                         </div>
-                        <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                        <div>
+                          <h3 className="font-medium">Configure Alerts</h3>
+                          <p className="text-xs text-muted-foreground">
+                            Set up breach notifications
+                          </p>
+                        </div>
                       </div>
+                      <ChevronRight className="h-5 w-5 text-muted-foreground" />
                     </div>
-                  </Link>
+                  </div>
                   
-                  <Link to="/monitor">
-                    <div className="cyber-card p-4 hover:bg-cyber-primary/5 transition-colors cursor-pointer">
-                      <div className="flex justify-between items-center">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full bg-cyber-success/10 flex items-center justify-center">
-                            <Check className="h-5 w-5 text-cyber-success" />
-                          </div>
-                          <div>
-                            <h3 className="font-medium">Continuous Monitoring</h3>
-                            <p className="text-xs text-muted-foreground">
-                              Track your digital footprint
-                            </p>
-                          </div>
+                  <div 
+                    className="cyber-card p-4 hover:bg-cyber-primary/5 transition-colors cursor-pointer"
+                    onClick={() => handleQuickAction('monitor')}
+                  >
+                    <div className="flex justify-between items-center">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-cyber-success/10 flex items-center justify-center">
+                          <Check className="h-5 w-5 text-cyber-success" />
                         </div>
-                        <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                        <div>
+                          <h3 className="font-medium">Continuous Monitoring</h3>
+                          <p className="text-xs text-muted-foreground">
+                            Track your digital footprint
+                          </p>
+                        </div>
                       </div>
+                      <ChevronRight className="h-5 w-5 text-muted-foreground" />
                     </div>
-                  </Link>
+                  </div>
                   
-                  <Link to="/history">
-                    <div className="cyber-card p-4 hover:bg-cyber-primary/5 transition-colors cursor-pointer">
-                      <div className="flex justify-between items-center">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full bg-cyber-primary/10 flex items-center justify-center">
-                            <History className="h-5 w-5 text-cyber-primary" />
-                          </div>
-                          <div>
-                            <h3 className="font-medium">View Scan History</h3>
-                            <p className="text-xs text-muted-foreground">
-                              Review previous scan results
-                            </p>
-                          </div>
+                  <div 
+                    className="cyber-card p-4 hover:bg-cyber-primary/5 transition-colors cursor-pointer"
+                    onClick={() => handleQuickAction('history')}
+                  >
+                    <div className="flex justify-between items-center">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-cyber-primary/10 flex items-center justify-center">
+                          <History className="h-5 w-5 text-cyber-primary" />
                         </div>
-                        <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                        <div>
+                          <h3 className="font-medium">View Scan History</h3>
+                          <p className="text-xs text-muted-foreground">
+                            Review previous scan results
+                          </p>
+                        </div>
                       </div>
+                      <ChevronRight className="h-5 w-5 text-muted-foreground" />
                     </div>
-                  </Link>
+                  </div>
                 </CardContent>
               </Card>
             </div>
@@ -314,6 +381,7 @@ const Dashboard = () => {
                                       variant="ghost" 
                                       size="sm" 
                                       className="text-cyber-primary hover:text-cyber-primary/80 hover:bg-cyber-primary/10"
+                                      onClick={() => handleViewScanDetails(scan)}
                                     >
                                       View Details
                                     </Button>
@@ -336,6 +404,75 @@ const Dashboard = () => {
           </div>
         </div>
       </main>
+
+      {/* Scan Details Dialog */}
+      <Dialog open={scanDetailsOpen} onOpenChange={setScanDetailsOpen}>
+        <DialogContent className="cyber-card max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex justify-between items-center">
+              <span>Scan Details</span>
+              <DialogClose className="absolute right-4 top-4 opacity-70 ring-offset-background transition-opacity hover:opacity-100">
+                <X className="h-4 w-4" />
+                <span className="sr-only">Close</span>
+              </DialogClose>
+            </DialogTitle>
+            <DialogDescription>
+              Information about the selected scan
+            </DialogDescription>
+          </DialogHeader>
+          {selectedScan && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm text-muted-foreground">Date</p>
+                  <p className="font-medium">{new Date(selectedScan.date).toLocaleDateString()}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Type</p>
+                  <p className="font-medium">{selectedScan.type}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Identifier</p>
+                  <p className="font-medium">{selectedScan.value}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Breaches Found</p>
+                  <p className={`font-medium flex items-center gap-1 ${selectedScan.breachesFound > 0 ? 'text-cyber-warning' : 'text-cyber-success'}`}>
+                    {selectedScan.breachesFound > 0 ? (
+                      <>
+                        <AlertTriangle className="h-4 w-4" />
+                        {selectedScan.breachesFound}
+                      </>
+                    ) : (
+                      <>
+                        <Check className="h-4 w-4" />
+                        0
+                      </>
+                    )}
+                  </p>
+                </div>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground mb-1">Analysis</p>
+                <p>{selectedScan.details}</p>
+              </div>
+              {selectedScan.breachesFound > 0 && (
+                <div className="pt-2">
+                  <Button 
+                    className="w-full bg-cyber-primary text-cyber-dark hover:bg-cyber-primary/80"
+                    onClick={() => {
+                      toast.success("Detailed breach report generated");
+                      setScanDetailsOpen(false);
+                    }}
+                  >
+                    Generate Detailed Report
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       <Footer />
     </div>

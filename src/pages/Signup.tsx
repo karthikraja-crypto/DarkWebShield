@@ -185,7 +185,7 @@ const Signup = () => {
                 <div className="grid gap-4">
                   <Button 
                     variant="outline" 
-                    className="cyber-input flex gap-2 w-full"
+                    className="cyber-input flex gap-2 w-full bg-white text-black hover:bg-gray-100"
                     onClick={handleGoogleSignup}
                     disabled={isLoading}
                   >
