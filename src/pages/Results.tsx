@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
@@ -43,7 +42,7 @@ const mockBreaches: BreachData[] = [
   }
 ];
 
-// Mock data for recommendations aligned with Recommendation interface
+// Mock data for recommendations aligned with updated Recommendation interface
 const mockRecommendations: Recommendation[] = [
   {
     id: '1',
@@ -51,7 +50,16 @@ const mockRecommendations: Recommendation[] = [
     description: 'Protect your account with an extra layer of security.',
     priority: 'high',
     icon: 'lock',
-    completed: false
+    completed: false,
+    setupSteps: [
+      'Go to your account settings page',
+      'Navigate to the "Security" or "Privacy" section',
+      'Look for "Two-Factor Authentication" or "2FA" option',
+      'Select your preferred 2FA method (SMS, authenticator app, etc.)',
+      'Follow the on-screen instructions to set up your device',
+      'Save your backup codes in a secure location',
+      'Verify that 2FA is working by logging out and back in'
+    ]
   },
   {
     id: '2',
@@ -59,7 +67,16 @@ const mockRecommendations: Recommendation[] = [
     description: 'Your current password may be vulnerable. Update it to a strong, unique password.',
     priority: 'medium',
     icon: 'key',
-    completed: false
+    completed: false,
+    setupSteps: [
+      'Go to your account settings',
+      'Find the "Change Password" option',
+      'Create a strong password with at least 12 characters',
+      'Include a mix of uppercase, lowercase, numbers, and symbols',
+      'Avoid using personal information or common phrases',
+      'Use a password manager to store your password securely',
+      'Enable password change notifications if available'
+    ]
   },
   {
     id: '3',
@@ -67,7 +84,16 @@ const mockRecommendations: Recommendation[] = [
     description: 'Regularly check your credit report for any unauthorized activity.',
     priority: 'low',
     icon: 'shield',
-    completed: false
+    completed: false,
+    setupSteps: [
+      'Request your free annual credit report from annualcreditreport.com',
+      'Review your report for any accounts you don\'t recognize',
+      'Check for inquiries you didn\'t authorize',
+      'Set up credit monitoring through your bank or a third-party service',
+      'Consider placing a fraud alert or credit freeze for added protection',
+      'Report any suspicious activity immediately',
+      'Schedule regular reviews of your credit report (at least quarterly)'
+    ]
   }
 ];
 
