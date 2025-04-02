@@ -3,7 +3,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Shield, Search, Lock, Bell, Database, Server, Users, Brain } from 'lucide-react';
+import { Shield, Search, Lock, Bell, Database, Server, Brain } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 
@@ -51,7 +51,7 @@ const About = () => {
               <div>
                 <h2 className="text-3xl font-bold mb-6">Our Story</h2>
                 <p className="text-muted-foreground mb-6">
-                  DarkWebShield was founded in 2021 by a team of cybersecurity experts with a shared vision: to democratize access to advanced dark web monitoring tools.
+                  DarkWebShield was founded in 2025 by a team of cybersecurity experts with a shared vision: to democratize access to advanced dark web monitoring tools.
                 </p>
                 <p className="text-muted-foreground mb-6">
                   After witnessing the devastating impact of data breaches on individuals and businesses, our founders recognized the need for an accessible solution that could help people understand and mitigate their digital exposure risks.
@@ -150,58 +150,11 @@ const About = () => {
               </div>
               
               <div className="cyber-card p-6">
-                <Users className="h-8 w-8 text-cyber-primary mb-4" />
+                <Lock className="h-8 w-8 text-cyber-primary mb-4" />
                 <h3 className="text-lg font-medium mb-2">Human Intelligence</h3>
                 <p className="text-sm text-muted-foreground">
                   Our security experts validate critical findings to ensure accuracy and relevance.
                 </p>
-              </div>
-            </div>
-          </div>
-        </section>
-        
-        {/* Team */}
-        <section className="py-20 bg-cyber-dark/30">
-          <div className="container mx-auto px-4">
-            <div className="text-center max-w-3xl mx-auto mb-16">
-              <h2 className="text-3xl font-bold mb-6">Meet Our Team</h2>
-              <p className="text-xl text-muted-foreground">
-                Our diverse team of cybersecurity experts, data scientists, and privacy advocates are committed to your digital safety.
-              </p>
-            </div>
-            
-            <div className="grid md:grid-cols-3 gap-8">
-              <div className="cyber-card overflow-hidden">
-                <div className="h-48 bg-cyber-dark/70"></div>
-                <div className="p-6">
-                  <h3 className="text-xl font-medium">Sarah Johnson</h3>
-                  <p className="text-cyber-primary mb-3">CEO & Co-Founder</p>
-                  <p className="text-sm text-muted-foreground">
-                    Former CISO with 15+ years of experience in information security and cyber threat intelligence.
-                  </p>
-                </div>
-              </div>
-              
-              <div className="cyber-card overflow-hidden">
-                <div className="h-48 bg-cyber-dark/70"></div>
-                <div className="p-6">
-                  <h3 className="text-xl font-medium">Michael Chen</h3>
-                  <p className="text-cyber-primary mb-3">CTO & Co-Founder</p>
-                  <p className="text-sm text-muted-foreground">
-                    AI researcher and security engineer specializing in machine learning for threat detection.
-                  </p>
-                </div>
-              </div>
-              
-              <div className="cyber-card overflow-hidden">
-                <div className="h-48 bg-cyber-dark/70"></div>
-                <div className="p-6">
-                  <h3 className="text-xl font-medium">Alex Rodriguez</h3>
-                  <p className="text-cyber-primary mb-3">Head of Research</p>
-                  <p className="text-sm text-muted-foreground">
-                    Dark web specialist with a background in digital forensics and malware analysis.
-                  </p>
-                </div>
               </div>
             </div>
           </div>
