@@ -2,7 +2,7 @@
 import React, { useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Shield, Menu, X, User, LogOut, Settings, CreditCard, Home } from 'lucide-react';
+import { Shield, Menu, X, User, LogOut, Settings, CreditCard, Home, LayoutDashboard, Search, InfoIcon } from 'lucide-react';
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -62,16 +62,28 @@ const Navbar = () => {
             </div>
           </Link>
           <Link to="/dashboard" className="text-sm font-medium text-foreground hover:text-cyber-primary transition-colors">
-            Dashboard
+            <div className="flex items-center gap-1">
+              <LayoutDashboard className="h-4 w-4" />
+              <span>Dashboard</span>
+            </div>
           </Link>
           <Link to="/scan" className="text-sm font-medium text-foreground hover:text-cyber-primary transition-colors">
-            New Scan
+            <div className="flex items-center gap-1">
+              <Search className="h-4 w-4" />
+              <span>New Scan</span>
+            </div>
           </Link>
           <Link to="/settings" className="text-sm font-medium text-foreground hover:text-cyber-primary transition-colors">
-            Settings
+            <div className="flex items-center gap-1">
+              <Settings className="h-4 w-4" />
+              <span>Settings</span>
+            </div>
           </Link>
           <Link to="/about" className="text-sm font-medium text-foreground hover:text-cyber-primary transition-colors">
-            About
+            <div className="flex items-center gap-1">
+              <InfoIcon className="h-4 w-4" />
+              <span>About</span>
+            </div>
           </Link>
           
           {isLoggedIn && user ? (
@@ -98,7 +110,7 @@ const Navbar = () => {
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
                   <Link to="/dashboard" className="cursor-pointer flex items-center">
-                    <User className="mr-2 h-4 w-4" />
+                    <LayoutDashboard className="mr-2 h-4 w-4" />
                     <span>Dashboard</span>
                   </Link>
                 </DropdownMenuItem>
@@ -110,7 +122,7 @@ const Navbar = () => {
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <Link to="/scan" className="cursor-pointer flex items-center">
-                    <Shield className="mr-2 h-4 w-4" />
+                    <Search className="mr-2 h-4 w-4" />
                     <span>New Scan</span>
                   </Link>
                 </DropdownMenuItem>
@@ -156,28 +168,40 @@ const Navbar = () => {
             className="block p-2 text-sm font-medium text-foreground hover:bg-cyber-primary/10 rounded-md"
             onClick={() => setIsMenuOpen(false)}
           >
-            Dashboard
+            <div className="flex items-center gap-2">
+              <LayoutDashboard className="h-4 w-4" />
+              <span>Dashboard</span>
+            </div>
           </Link>
           <Link 
             to="/scan" 
             className="block p-2 text-sm font-medium text-foreground hover:bg-cyber-primary/10 rounded-md"
             onClick={() => setIsMenuOpen(false)}
           >
-            New Scan
+            <div className="flex items-center gap-2">
+              <Search className="h-4 w-4" />
+              <span>New Scan</span>
+            </div>
           </Link>
           <Link 
             to="/settings" 
             className="block p-2 text-sm font-medium text-foreground hover:bg-cyber-primary/10 rounded-md"
             onClick={() => setIsMenuOpen(false)}
           >
-            Settings
+            <div className="flex items-center gap-2">
+              <Settings className="h-4 w-4" />
+              <span>Settings</span>
+            </div>
           </Link>
           <Link 
             to="/about" 
             className="block p-2 text-sm font-medium text-foreground hover:bg-cyber-primary/10 rounded-md"
             onClick={() => setIsMenuOpen(false)}
           >
-            About
+            <div className="flex items-center gap-2">
+              <InfoIcon className="h-4 w-4" />
+              <span>About</span>
+            </div>
           </Link>
           
           {isLoggedIn && user ? (
