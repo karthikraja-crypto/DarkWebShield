@@ -1,84 +1,85 @@
+
 import React, { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import SecurityScoreCard from '@/components/SecurityScoreCard';
-import RecommendationsList from '@/components/RecommendationsList';
-import BreachCard from '@/components/BreachCard';
+import RecommendationsList, { Recommendation } from '@/components/RecommendationsList';
+import BreachCard, { BreachData } from '@/components/BreachCard';
 import ScanResultExport from '@/components/ScanResultExport';
 
-// Mock data structure for breaches
-interface Breach {
-  name: string;
-  domain: string;
-  breachDate: string;
-  severity: 'high' | 'medium' | 'low';
-  affectedAccounts: number;
-  description: string;
-}
-
-// Mock data structure for recommendations
-interface Recommendation {
-  title: string;
-  description: string;
-  priority: 'high' | 'medium' | 'low';
-}
-
-// Mock data for breaches
-const mockBreaches: Breach[] = [
+// Mock data for breaches aligned with BreachData interface
+const mockBreaches: BreachData[] = [
   {
-    name: 'Adobe Breach',
+    id: '1',
+    title: 'Adobe Breach',
     domain: 'adobe.com',
     breachDate: '2013-10-03',
-    severity: 'high',
-    affectedAccounts: 153000000,
+    affectedData: ['Email', 'Passwords', 'Credit Cards'],
+    riskLevel: 'high',
+    verified: true,
     description: 'In October 2013, 153 million Adobe accounts were breached, resulting in exposed user IDs, usernames, passwords, and password hints. The passwords were a mix of unsalted SHA-1 hashes and crypt().'
   },
   {
-    name: 'MySpace Breach',
+    id: '2',
+    title: 'MySpace Breach',
     domain: 'myspace.com',
     breachDate: '2016-05-26',
-    severity: 'high',
-    affectedAccounts: 360000000,
+    affectedData: ['Email', 'Username', 'Password'],
+    riskLevel: 'high',
+    verified: true,
     description: 'In May 2016, MySpace suffered a data breach that exposed over 360 million accounts. The breach included email addresses, usernames, and passwords.'
   },
   {
-    name: 'LinkedIn Breach',
+    id: '3',
+    title: 'LinkedIn Breach',
     domain: 'linkedin.com',
     breachDate: '2012-06-06',
-    severity: 'high',
-    affectedAccounts: 164000000,
+    affectedData: ['Email', 'Password', 'User Details'],
+    riskLevel: 'high',
+    verified: true,
     description: 'In June 2012, LinkedIn suffered a major data breach that exposed 164 million accounts. The exposed data included email addresses and passwords.'
   }
 ];
 
-// Mock data for recommendations
+// Mock data for recommendations aligned with Recommendation interface
 const mockRecommendations: Recommendation[] = [
   {
+    id: '1',
     title: 'Enable Two-Factor Authentication',
     description: 'Protect your account with an extra layer of security.',
-    priority: 'high'
+    priority: 'high',
+    icon: 'lock',
+    completed: false
   },
   {
+    id: '2',
     title: 'Update Your Password',
     description: 'Your current password may be vulnerable. Update it to a strong, unique password.',
-    priority: 'medium'
+    priority: 'medium',
+    icon: 'key',
+    completed: false
   },
   {
+    id: '3',
     title: 'Monitor Your Credit Report',
     description: 'Regularly check your credit report for any unauthorized activity.',
-    priority: 'low'
+    priority: 'low',
+    icon: 'shield',
+    completed: false
   }
 ];
 
 const Results = () => {
   const location = useLocation();
   const [securityScore, setSecurityScore] = useState<number>(0);
-  const [breaches, setBreaches] = useState<Breach[]>([]);
+  const [breaches, setBreaches] = useState<BreachData[]>([]);
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
   const [scanDate, setScanDate] = useState<string>('');
   const [scanDuration, setScanDuration] = useState<number>(0);
+  const [breachCount, setBreachCount] = useState<number>(0);
+  const [riskFactor, setRiskFactor] = useState<'high' | 'medium' | 'low'>('medium');
 
   useEffect(() => {
     // Simulate fetching scan results from an API or processing data
@@ -86,8 +87,9 @@ const Results = () => {
     setSecurityScore(75); // Mock security score
     setBreaches(mockBreaches); // Mock breaches
     setRecommendations(mockRecommendations); // Mock recommendations
-    setScanDate(new Date().toLocaleDateString()); // Mock scan date
+    setScanDate(new Date().toISOString()); // Mock scan date
     setScanDuration(45); // Mock scan duration in seconds
+    setBreachCount(mockBreaches.length); // Set breach count
   }, [location]);
 
   return (
@@ -115,7 +117,7 @@ const Results = () => {
                 <CardContent>
                   <div className="space-y-2">
                     <p>
-                      <span className="font-semibold">Date:</span> {scanDate}
+                      <span className="font-semibold">Date:</span> {new Date(scanDate).toLocaleDateString()}
                     </p>
                     <p>
                       <span className="font-semibold">Duration:</span> {scanDuration} seconds
@@ -127,11 +129,10 @@ const Results = () => {
               {/* Breach Information */}
               <div className="space-y-4">
                 <h2 className="text-xl font-bold">Found Breaches</h2>
-                {breaches.map((breach, index) => (
+                {breaches.map((breach) => (
                   <BreachCard 
-                    key={index} 
+                    key={breach.id} 
                     breach={breach}
-                    showExportButton={false}
                   />
                 ))}
               </div>
@@ -139,17 +140,22 @@ const Results = () => {
             
             {/* Right Column */}
             <div className="lg:col-span-4 space-y-6">
-              <SecurityScoreCard score={securityScore} />
+              <SecurityScoreCard 
+                score={securityScore} 
+                breachCount={breachCount}
+                lastScanDate={scanDate}
+                riskFactor={riskFactor}
+              />
               <RecommendationsList recommendations={recommendations} />
               
               {/* Add the new Export component */}
               <ScanResultExport results={[
                 ...breaches.map(breach => ({
-                  BreachName: breach.name,
+                  BreachName: breach.title,
                   Domain: breach.domain,
                   BreachDate: breach.breachDate,
-                  Severity: breach.severity,
-                  AffectedAccounts: breach.affectedAccounts,
+                  Severity: breach.riskLevel,
+                  AffectedData: breach.affectedData.join(', '),
                   Description: breach.description.substring(0, 100) + '...'
                 }))
               ]} />
