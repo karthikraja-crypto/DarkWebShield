@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -195,7 +196,11 @@ const Dashboard = () => {
         }
         break;
       case 'history':
-        document.querySelector('button[value="history"]')?.click();
+        // Fix for the TypeScript error - properly type the element and check if it exists
+        const historyTab = document.querySelector('button[value="history"]') as HTMLButtonElement | null;
+        if (historyTab) {
+          historyTab.click();
+        }
         break;
       default:
         break;
