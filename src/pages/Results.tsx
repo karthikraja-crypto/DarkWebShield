@@ -113,16 +113,28 @@ const Results = () => {
   const [scanDuration, setScanDuration] = useState<number>(0);
   const [breachCount, setBreachCount] = useState<number>(0);
   const [riskFactor, setRiskFactor] = useState<'high' | 'medium' | 'low'>('medium');
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
   useEffect(() => {
     // Simulate fetching scan results from an API or processing data
-    // For now, using mock data
-    setSecurityScore(75); // Mock security score
-    setBreaches(mockBreaches); // Mock breaches
-    setRecommendations(mockRecommendations); // Mock recommendations
-    setScanDate(new Date().toISOString()); // Mock scan date
-    setScanDuration(45); // Mock scan duration in seconds
-    setBreachCount(mockBreaches.length); // Set breach count
+    const fetchData = () => {
+      try {
+        // For now, using mock data
+        setSecurityScore(75); // Mock security score
+        setBreaches(mockBreaches); // Mock breaches
+        setRecommendations(mockRecommendations); // Mock recommendations
+        setScanDate(new Date().toISOString()); // Mock scan date
+        setScanDuration(45); // Mock scan duration in seconds
+        setBreachCount(mockBreaches.length); // Set breach count
+      } catch (error) {
+        console.error("Error loading data:", error);
+        toast.error("Failed to load scan results");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
   }, [location]);
 
   const handleGenerateOverallReport = () => {
@@ -151,6 +163,21 @@ const Results = () => {
       toast.success('Comprehensive security report has been generated and downloaded');
     }, 1000);
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Navbar />
+        <main className="flex-1 py-10 flex items-center justify-center">
+          <div className="text-center">
+            <div className="w-16 h-16 border-4 border-cyber-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <p className="text-cyber-primary">Loading scan results...</p>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -199,12 +226,18 @@ const Results = () => {
               {/* Breach Information */}
               <div className="space-y-4">
                 <h2 className="text-xl font-bold">Found Breaches</h2>
-                {breaches.map((breach) => (
-                  <BreachCard 
-                    key={breach.id} 
-                    breach={breach}
-                  />
-                ))}
+                {breaches.length > 0 ? (
+                  breaches.map((breach) => (
+                    <BreachCard 
+                      key={breach.id} 
+                      breach={breach}
+                    />
+                  ))
+                ) : (
+                  <Card className="cyber-card p-6">
+                    <p className="text-center text-muted-foreground">No breaches detected</p>
+                  </Card>
+                )}
               </div>
             </div>
             

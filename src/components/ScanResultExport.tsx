@@ -18,7 +18,7 @@ const ScanResultExport = ({ results, className }: ScanResultExportProps) => {
             data={results} 
             variant="outline" 
             className="border-cyber-primary/50 text-cyber-primary hover:bg-cyber-primary/10"
-            showOverallReport={true}
+            showOverallReport={results.length > 0}
           />
         </CardTitle>
         <CardDescription>
