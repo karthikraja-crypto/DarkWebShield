@@ -218,7 +218,7 @@ const Results = () => {
               />
               <RecommendationsList recommendations={recommendations} />
               
-              {/* ScanResultExport component is still included but might be redundant now */}
+              {/* Update ScanResultExport to show "Overall Report" */}
               <ScanResultExport results={[
                 ...breaches.map(breach => ({
                   BreachName: breach.title,

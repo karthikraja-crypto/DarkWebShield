@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -18,8 +17,8 @@ import {
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { toast } from 'sonner';
+import { exportOverallReport } from '@/utils/exportUtils';
 
-// Define notification types
 type NotificationType = 'breach' | 'system' | 'monitoring';
 
 interface Notification {
@@ -34,13 +33,12 @@ interface Notification {
 }
 
 const Notifications = () => {
-  // Mock notifications data
   const [notifications, setNotifications] = useState<Notification[]>([
     {
       id: '1',
       title: 'New Breach Detected',
       message: 'Your email was found in a recent data breach from MegaStore.',
-      date: new Date(Date.now() - 3600000).toISOString(), // 1 hour ago
+      date: new Date(Date.now() - 3600000).toISOString(),
       type: 'breach',
       read: false,
       hasReport: true,
@@ -50,7 +48,7 @@ const Notifications = () => {
       id: '2',
       title: 'Continuous Monitoring Active',
       message: 'Your digital footprint is now being continuously monitored for new breaches.',
-      date: new Date(Date.now() - 86400000).toISOString(), // 1 day ago
+      date: new Date(Date.now() - 86400000).toISOString(),
       type: 'monitoring',
       read: true
     },
@@ -58,7 +56,7 @@ const Notifications = () => {
       id: '3',
       title: 'System Update Available',
       message: 'A new version of DarkWebShield is available with improved security features.',
-      date: new Date(Date.now() - 172800000).toISOString(), // 2 days ago
+      date: new Date(Date.now() - 172800000).toISOString(),
       type: 'system',
       read: false
     },
@@ -66,7 +64,7 @@ const Notifications = () => {
       id: '4',
       title: 'Scan Completed',
       message: 'Your security scan has been completed. No new breaches were found.',
-      date: new Date(Date.now() - 259200000).toISOString(), // 3 days ago
+      date: new Date(Date.now() - 259200000).toISOString(),
       type: 'monitoring',
       read: true
     },
@@ -74,7 +72,7 @@ const Notifications = () => {
       id: '5',
       title: 'Security Report Generated',
       message: 'Your detailed security report has been generated and is ready for viewing.',
-      date: new Date(Date.now() - 345600000).toISOString(), // 4 days ago
+      date: new Date(Date.now() - 345600000).toISOString(),
       type: 'breach',
       read: false,
       hasReport: true,
@@ -84,12 +82,10 @@ const Notifications = () => {
 
   const [activeFilter, setActiveFilter] = useState<NotificationType | 'all'>('all');
 
-  // Filter notifications based on the active filter
   const filteredNotifications = activeFilter === 'all'
     ? notifications
     : notifications.filter(notification => notification.type === activeFilter);
 
-  // Mark notification as read
   const markAsRead = (id: string) => {
     setNotifications(notifications.map(notification =>
       notification.id === id ? { ...notification, read: true } : notification
@@ -97,31 +93,55 @@ const Notifications = () => {
     toast.success("Notification marked as read");
   };
 
-  // Delete notification
   const deleteNotification = (id: string) => {
     setNotifications(notifications.filter(notification => notification.id !== id));
     toast.success("Notification deleted");
   };
 
-  // Mark all as read
   const markAllAsRead = () => {
     setNotifications(notifications.map(notification => ({ ...notification, read: true })));
     toast.success("All notifications marked as read");
   };
 
-  // Clear all notifications
   const clearAllNotifications = () => {
     setNotifications([]);
     toast.success("All notifications cleared");
   };
 
-  // View report
-  const viewReport = (reportUrl: string) => {
-    toast.info("Opening security report");
-    window.open(reportUrl, '_blank');
+  const viewReport = (reportUrl: string, isOverallReport = false) => {
+    if (isOverallReport) {
+      toast.info("Generating comprehensive security report...");
+      
+      const breachData = [
+        {
+          Title: "Adobe Breach",
+          Domain: "adobe.com",
+          Date: "10/03/2013",
+          Risk: "HIGH",
+          AffectedData: "Email, Password, Credit Cards",
+          Description: "In October 2013, 153 million Adobe accounts were breached."
+        }
+      ];
+      
+      const recommendationsData = [
+        {
+          Title: "Enable Two-Factor Authentication",
+          Priority: "high",
+          Status: "Pending",
+          Description: "Protect your account with an extra layer of security."
+        }
+      ];
+      
+      setTimeout(() => {
+        exportOverallReport(breachData, recommendationsData, [], 'darkwebshield-overall-report');
+        toast.success("Comprehensive security report has been generated and downloaded");
+      }, 1000);
+    } else {
+      toast.info("Opening security report");
+      window.open(reportUrl, '_blank');
+    }
   };
 
-  // Format date
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     const now = new Date();
@@ -240,10 +260,12 @@ const Notifications = () => {
                               variant="outline" 
                               size="sm" 
                               className="text-cyber-primary"
-                              onClick={() => notification.reportUrl && viewReport(notification.reportUrl)}
+                              onClick={() => viewReport(notification.reportUrl || '#', notification.title.includes('Overall') || notification.title.includes('Comprehensive'))}
                             >
                               <FileText className="mr-1 h-4 w-4" />
-                              View Report
+                              {notification.title.includes('Overall') || notification.title.includes('Comprehensive') 
+                                ? 'Overall Report' 
+                                : 'View Report'}
                             </Button>
                           )}
                           <Button 
