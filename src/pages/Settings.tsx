@@ -1,6 +1,6 @@
 
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useContext, useEffect } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -12,12 +12,18 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
+import { AuthContext } from '../App';
 
 const Settings = () => {
+  // Get auth context
+  const { user, logout } = useContext(AuthContext);
+  const navigate = useNavigate();
+  const location = useLocation();
+
   // Mock user data
   const [userData, setUserData] = React.useState({
-    name: 'John Doe',
-    email: 'john.doe@example.com',
+    name: user?.name || 'John Doe',
+    email: user?.email || 'john.doe@example.com',
     phone: '+1 (555) 123-4567',
     notifications: {
       email: true,
@@ -28,6 +34,16 @@ const Settings = () => {
       accountActivity: false,
     }
   });
+  
+  // Determine which tab to show initially
+  const [activeTab, setActiveTab] = React.useState<string>('profile');
+  
+  // Check for tab in location state
+  useEffect(() => {
+    if (location.state && location.state.activeTab) {
+      setActiveTab(location.state.activeTab);
+    }
+  }, [location.state]);
 
   const handleUpdateProfile = (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,6 +64,12 @@ const Settings = () => {
       }
     }));
     toast.success('Notification preferences updated!');
+  };
+  
+  const handleLogout = () => {
+    logout();
+    toast.success('You have been logged out');
+    navigate('/login');
   };
 
   return (
@@ -77,26 +99,32 @@ const Settings = () => {
                   </div>
 
                   <div className="space-y-1">
-                    <Button variant="ghost" className="w-full justify-start" asChild>
-                      <Link to="#profile">
-                        <User className="mr-2 h-4 w-4" />
-                        <span>Profile</span>
-                      </Link>
+                    <Button 
+                      variant="ghost" 
+                      className={`w-full justify-start ${activeTab === 'profile' ? 'bg-cyber-primary/10 text-cyber-primary' : ''}`}
+                      onClick={() => setActiveTab('profile')}
+                    >
+                      <User className="mr-2 h-4 w-4" />
+                      <span>Profile</span>
                     </Button>
-                    <Button variant="ghost" className="w-full justify-start" asChild>
-                      <Link to="#security">
-                        <Shield className="mr-2 h-4 w-4" />
-                        <span>Security</span>
-                      </Link>
+                    <Button 
+                      variant="ghost" 
+                      className={`w-full justify-start ${activeTab === 'security' ? 'bg-cyber-primary/10 text-cyber-primary' : ''}`}
+                      onClick={() => setActiveTab('security')}
+                    >
+                      <Shield className="mr-2 h-4 w-4" />
+                      <span>Security</span>
                     </Button>
-                    <Button variant="ghost" className="w-full justify-start" asChild>
-                      <Link to="#notifications">
-                        <BellRing className="mr-2 h-4 w-4" />
-                        <span>Notifications</span>
-                      </Link>
+                    <Button 
+                      variant="ghost" 
+                      className={`w-full justify-start ${activeTab === 'notifications' ? 'bg-cyber-primary/10 text-cyber-primary' : ''}`}
+                      onClick={() => setActiveTab('notifications')}
+                    >
+                      <BellRing className="mr-2 h-4 w-4" />
+                      <span>Notifications</span>
                     </Button>
                     <Separator className="my-2" />
-                    <Button variant="ghost" className="w-full justify-start text-cyber-danger">
+                    <Button variant="ghost" className="w-full justify-start text-cyber-danger" onClick={handleLogout}>
                       <LogOut className="mr-2 h-4 w-4" />
                       <span>Log out</span>
                     </Button>
@@ -107,7 +135,7 @@ const Settings = () => {
 
             {/* Main Content */}
             <div className="md:col-span-9">
-              <Tabs defaultValue="profile">
+              <Tabs value={activeTab} onValueChange={setActiveTab}>
                 <TabsList className="grid grid-cols-3 mb-8">
                   <TabsTrigger value="profile">Profile</TabsTrigger>
                   <TabsTrigger value="security">Security</TabsTrigger>

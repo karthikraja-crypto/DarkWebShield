@@ -2,7 +2,7 @@
 import React, { useContext, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Shield, Menu, X, User, LogOut, Settings, Home, LayoutDashboard, Search, InfoIcon } from 'lucide-react';
+import { Shield, Menu, X, User, LogOut, Settings, Home, LayoutDashboard, Search, InfoIcon, Bell } from 'lucide-react';
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -92,6 +92,12 @@ const Navbar = () => {
             <div className="flex items-center gap-1">
               <Search className="h-4 w-4" />
               <span>New Scan</span>
+            </div>
+          </Link>
+          <Link to="/notifications" className="text-sm font-medium text-foreground hover:text-cyber-primary transition-colors">
+            <div className="flex items-center gap-1">
+              <Bell className="h-4 w-4" />
+              <span>Notifications</span>
             </div>
           </Link>
           <Link to="/settings" className="text-sm font-medium text-foreground hover:text-cyber-primary transition-colors">
@@ -235,6 +241,16 @@ const Navbar = () => {
             <div className="flex items-center gap-2">
               <Search className="h-4 w-4" />
               <span>New Scan</span>
+            </div>
+          </Link>
+          <Link 
+            to="/notifications" 
+            className="block p-2 text-sm font-medium text-foreground hover:bg-cyber-primary/10 rounded-md"
+            onClick={() => setIsMenuOpen(false)}
+          >
+            <div className="flex items-center gap-2">
+              <Bell className="h-4 w-4" />
+              <span>Notifications</span>
             </div>
           </Link>
           <Link 

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, createContext } from 'react';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -8,6 +9,7 @@ import Index from "./pages/Index";
 import Dashboard from "./pages/Dashboard";
 import Scan from "./pages/Scan";
 import Results from "./pages/Results";
+import Notifications from "./pages/Notifications";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Settings from "./pages/Settings";
@@ -93,6 +95,9 @@ const App: React.FC = () => {
               } />
               <Route path="/results" element={
                 isLoggedIn ? <Results /> : <Navigate to="/login" replace />
+              } />
+              <Route path="/notifications" element={
+                isLoggedIn ? <Notifications /> : <Navigate to="/login" replace />
               } />
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<Signup />} />

@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -9,7 +9,9 @@ import {
   AlertTriangle, 
   Check, 
   History, 
-  X 
+  X, 
+  Activity,
+  Bell
 } from 'lucide-react';
 import { 
   Dialog, 
@@ -25,15 +27,16 @@ import Footer from '@/components/Footer';
 import SecurityScoreCard from '@/components/SecurityScoreCard';
 import BreachCard, { BreachData } from '@/components/BreachCard';
 import RecommendationsList, { Recommendation } from '@/components/RecommendationsList';
+import { exportReport } from '@/utils/exportUtils';
 
 const Dashboard = () => {
-  // Mock data
+  const navigate = useNavigate();
+
   const [securityScore] = useState(76);
   const [breachCount] = useState(2);
   const [lastScanDate] = useState(new Date().toISOString());
   const [riskFactor] = useState<'high' | 'medium' | 'low'>('medium');
   
-  // Mock breaches data
   const [breaches] = useState<BreachData[]>([
     {
       id: '1',
@@ -57,7 +60,6 @@ const Dashboard = () => {
     }
   ]);
   
-  // Mock recommendations
   const [recommendations, setRecommendations] = useState<Recommendation[]>([
     {
       id: '1',
@@ -93,7 +95,6 @@ const Dashboard = () => {
     }
   ]);
   
-  // Mock scan history
   const [scanHistory] = useState([
     {
       id: '1',
@@ -118,7 +119,6 @@ const Dashboard = () => {
     }
   ]);
   
-  // New state for the selected scan details
   const [selectedScan, setSelectedScan] = useState<{
     id: string;
     date: string;
@@ -128,17 +128,16 @@ const Dashboard = () => {
     details?: string;
   } | null>(null);
   
-  // New state for the scan details dialog
   const [scanDetailsOpen, setScanDetailsOpen] = useState(false);
   
-  // Handle mark recommendation as completed
+  const [monitoringActive, setMonitoringActive] = useState(false);
+
   const handleCompleteRecommendation = (id: string) => {
     setRecommendations(recommendations.map(rec => 
       rec.id === id ? { ...rec, completed: true } : rec
     ));
   };
 
-  // Handle view scan details
   const handleViewScanDetails = (scan: any) => {
     setSelectedScan({
       ...scan,
@@ -149,26 +148,73 @@ const Dashboard = () => {
     setScanDetailsOpen(true);
   };
 
-  // Handle quick actions
+  const handleExportReport = () => {
+    toast.info('Generating breach report...');
+    
+    const reportData = breaches.map(breach => ({
+      Title: breach.title,
+      Domain: breach.domain,
+      Date: new Date(breach.breachDate).toLocaleDateString(),
+      Risk: breach.riskLevel.toUpperCase(),
+      AffectedData: breach.affectedData.join(', '),
+      Description: breach.description
+    }));
+    
+    setTimeout(() => {
+      exportReport(reportData, 'pdf', 'security-breach-report');
+      toast.success('Security report has been generated and downloaded');
+    }, 1500);
+  };
+
   const handleQuickAction = (action: string) => {
     switch(action) {
       case 'scan':
-        toast.info('Starting a new security scan...');
-        setTimeout(() => {
-          toast.success('Scan completed successfully!');
-        }, 2000);
+        navigate('/scan');
         break;
       case 'alerts':
-        toast.success('Alert notifications have been configured');
+        navigate('/settings', { state: { activeTab: 'notifications' } });
         break;
       case 'monitor':
-        toast.success('Continuous monitoring has been activated');
+        if (!monitoringActive) {
+          setMonitoringActive(true);
+          toast.success('Continuous monitoring has been activated');
+          
+          setTimeout(() => {
+            if (Math.random() > 0.5) {
+              toast.error('New breach detected! Check your notifications.', {
+                action: {
+                  label: 'View',
+                  onClick: () => navigate('/notifications')
+                }
+              });
+            }
+          }, 10000);
+        } else {
+          setMonitoringActive(false);
+          toast.info('Continuous monitoring has been deactivated');
+        }
         break;
       case 'history':
-        toast.info('Viewing your scan history');
+        document.querySelector('button[value="history"]')?.click();
         break;
       default:
         break;
+    }
+  };
+
+  const handleGenerateDetailedReport = () => {
+    if (selectedScan) {
+      toast.success("Detailed breach report generated and sent to notifications");
+      setScanDetailsOpen(false);
+      
+      setTimeout(() => {
+        toast.info('Report is available in your notifications', {
+          action: {
+            label: 'View',
+            onClick: () => navigate('/notifications')
+          }
+        });
+      }, 1500);
     }
   };
 
@@ -186,7 +232,6 @@ const Dashboard = () => {
           </header>
 
           <div className="grid md:grid-cols-12 gap-6">
-            {/* Security Score */}
             <div className="md:col-span-4">
               <SecurityScoreCard 
                 score={securityScore} 
@@ -196,7 +241,6 @@ const Dashboard = () => {
               />
             </div>
 
-            {/* Quick Actions */}
             <div className="md:col-span-8">
               <Card className="cyber-card h-full">
                 <CardHeader>
@@ -245,18 +289,31 @@ const Dashboard = () => {
                   </div>
                   
                   <div 
-                    className="cyber-card p-4 hover:bg-cyber-primary/5 transition-colors cursor-pointer"
+                    className={`cyber-card p-4 hover:bg-cyber-primary/5 transition-colors cursor-pointer ${
+                      monitoringActive ? 'border-cyber-success border-2' : ''
+                    }`}
                     onClick={() => handleQuickAction('monitor')}
                   >
                     <div className="flex justify-between items-center">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-cyber-success/10 flex items-center justify-center">
-                          <Check className="h-5 w-5 text-cyber-success" />
+                        <div className={`w-10 h-10 rounded-full ${
+                          monitoringActive 
+                            ? 'bg-cyber-success/10 flex items-center justify-center' 
+                            : 'bg-cyber-primary/10 flex items-center justify-center'
+                        }`}>
+                          <Activity className={`h-5 w-5 ${
+                            monitoringActive ? 'text-cyber-success' : 'text-cyber-primary'
+                          }`} />
                         </div>
                         <div>
-                          <h3 className="font-medium">Continuous Monitoring</h3>
+                          <h3 className="font-medium">
+                            {monitoringActive ? 'Stop Monitoring' : 'Continuous Monitoring'}
+                          </h3>
                           <p className="text-xs text-muted-foreground">
-                            Track your digital footprint
+                            {monitoringActive 
+                              ? 'Actively monitoring your data' 
+                              : 'Track your digital footprint'
+                            }
                           </p>
                         </div>
                       </div>
@@ -287,7 +344,6 @@ const Dashboard = () => {
               </Card>
             </div>
 
-            {/* Main Content Tabs */}
             <div className="md:col-span-12">
               <Tabs defaultValue="breaches">
                 <TabsList className="grid grid-cols-3 mb-8">
@@ -303,7 +359,11 @@ const Dashboard = () => {
                         <h2 className="text-xl font-semibold">
                           {breaches.length} Breach{breaches.length === 1 ? '' : 'es'} Detected
                         </h2>
-                        <Button variant="outline" className="text-cyber-primary border-cyber-primary/30">
+                        <Button 
+                          variant="outline" 
+                          className="text-cyber-primary border-cyber-primary/30"
+                          onClick={handleExportReport}
+                        >
                           Export Report
                         </Button>
                       </div>
@@ -405,7 +465,6 @@ const Dashboard = () => {
         </div>
       </main>
 
-      {/* Scan Details Dialog */}
       <Dialog open={scanDetailsOpen} onOpenChange={setScanDetailsOpen}>
         <DialogContent className="cyber-card max-w-md">
           <DialogHeader>
@@ -460,10 +519,7 @@ const Dashboard = () => {
                 <div className="pt-2">
                   <Button 
                     className="w-full bg-cyber-primary text-cyber-dark hover:bg-cyber-primary/80"
-                    onClick={() => {
-                      toast.success("Detailed breach report generated");
-                      setScanDetailsOpen(false);
-                    }}
+                    onClick={handleGenerateDetailedReport}
                   >
                     Generate Detailed Report
                   </Button>
