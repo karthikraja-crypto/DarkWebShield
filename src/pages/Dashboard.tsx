@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,7 +12,8 @@ import {
   History, 
   X, 
   Activity,
-  Bell
+  Bell,
+  FileText
 } from 'lucide-react';
 import { 
   Dialog, 
@@ -28,10 +29,12 @@ import Footer from '@/components/Footer';
 import SecurityScoreCard from '@/components/SecurityScoreCard';
 import BreachCard, { BreachData } from '@/components/BreachCard';
 import RecommendationsList, { Recommendation } from '@/components/RecommendationsList';
-import { exportReport } from '@/utils/exportUtils';
+import { exportReport, exportOverallReport } from '@/utils/exportUtils';
+import { AuthContext } from '../App';
 
 const Dashboard = () => {
   const navigate = useNavigate();
+  const { user } = useContext(AuthContext);
 
   const [securityScore] = useState(76);
   const [breachCount] = useState(2);
@@ -149,9 +152,10 @@ const Dashboard = () => {
     setScanDetailsOpen(true);
   };
 
-  const handleExportReport = () => {
-    toast.info('Generating breach report...');
+  const handleGenerateOverallReport = () => {
+    toast.info('Generating comprehensive security report...');
     
+    // Prepare the report data
     const reportData = breaches.map(breach => ({
       Title: breach.title,
       Domain: breach.domain,
@@ -161,9 +165,25 @@ const Dashboard = () => {
       Description: breach.description
     }));
     
+    // Prepare recommendations data
+    const recommendationsData = recommendations.map(rec => ({
+      Title: rec.title,
+      Priority: rec.priority,
+      Status: rec.completed ? 'Completed' : 'Pending',
+      Description: rec.description
+    }));
+    
+    // Prepare scan history data
+    const historyData = scanHistory.map(scan => ({
+      Date: new Date(scan.date).toLocaleDateString(),
+      Type: scan.type,
+      Value: scan.value,
+      BreachesFound: scan.breachesFound
+    }));
+    
     setTimeout(() => {
-      exportReport(reportData, 'pdf', 'security-breach-report');
-      toast.success('Security report has been generated and downloaded');
+      exportOverallReport(reportData, recommendationsData, historyData, 'darkwebshield-overall-report');
+      toast.success('Comprehensive security report has been generated and downloaded');
     }, 1500);
   };
 
@@ -367,9 +387,10 @@ const Dashboard = () => {
                         <Button 
                           variant="outline" 
                           className="text-cyber-primary border-cyber-primary/30"
-                          onClick={handleExportReport}
+                          onClick={handleGenerateOverallReport}
                         >
-                          Export Report
+                          <FileText className="mr-2 h-4 w-4" />
+                          Overall Report
                         </Button>
                       </div>
                       <div className="grid md:grid-cols-2 gap-6">

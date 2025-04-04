@@ -1,12 +1,18 @@
-import React, { useEffect, useState } from 'react';
+
+import React, { useEffect, useState, useContext } from 'react';
 import { useLocation } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { FileText } from 'lucide-react';
 import SecurityScoreCard from '@/components/SecurityScoreCard';
 import RecommendationsList, { Recommendation } from '@/components/RecommendationsList';
 import BreachCard, { BreachData } from '@/components/BreachCard';
 import ScanResultExport from '@/components/ScanResultExport';
+import { exportOverallReport } from '@/utils/exportUtils';
+import { toast } from 'sonner';
+import { AuthContext } from '@/App';
 
 // Mock data for breaches aligned with BreachData interface
 const mockBreaches: BreachData[] = [
@@ -99,6 +105,7 @@ const mockRecommendations: Recommendation[] = [
 
 const Results = () => {
   const location = useLocation();
+  const { user } = useContext(AuthContext);
   const [securityScore, setSecurityScore] = useState<number>(0);
   const [breaches, setBreaches] = useState<BreachData[]>([]);
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
@@ -118,17 +125,54 @@ const Results = () => {
     setBreachCount(mockBreaches.length); // Set breach count
   }, [location]);
 
+  const handleGenerateOverallReport = () => {
+    toast.info('Generating comprehensive security report...');
+    
+    // Prepare the report data
+    const reportData = breaches.map(breach => ({
+      Title: breach.title,
+      Domain: breach.domain,
+      Date: new Date(breach.breachDate).toLocaleDateString(),
+      Risk: breach.riskLevel.toUpperCase(),
+      AffectedData: breach.affectedData.join(', '),
+      Description: breach.description
+    }));
+    
+    // Prepare recommendations data
+    const recommendationsData = recommendations.map(rec => ({
+      Title: rec.title,
+      Priority: rec.priority,
+      Status: 'Pending',
+      Description: rec.description
+    }));
+    
+    setTimeout(() => {
+      exportOverallReport(reportData, recommendationsData, [], 'darkwebshield-scan-results');
+      toast.success('Comprehensive security report has been generated and downloaded');
+    }, 1000);
+  };
+
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
       
       <main className="flex-1 py-10">
         <div className="container mx-auto px-4">
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold mb-2">Scan Results</h1>
-            <p className="text-muted-foreground">
-              Detailed analysis of potential security threats and vulnerabilities
-            </p>
+          <div className="mb-8 flex justify-between items-center">
+            <div>
+              <h1 className="text-3xl font-bold mb-2">Scan Results</h1>
+              <p className="text-muted-foreground">
+                Detailed analysis of potential security threats and vulnerabilities
+              </p>
+            </div>
+            <Button 
+              variant="outline" 
+              className="text-cyber-primary border-cyber-primary/30"
+              onClick={handleGenerateOverallReport}
+            >
+              <FileText className="mr-2 h-4 w-4" />
+              Overall Report
+            </Button>
           </div>
           
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -174,7 +218,7 @@ const Results = () => {
               />
               <RecommendationsList recommendations={recommendations} />
               
-              {/* Add the new Export component */}
+              {/* ScanResultExport component is still included but might be redundant now */}
               <ScanResultExport results={[
                 ...breaches.map(breach => ({
                   BreachName: breach.title,

@@ -3,7 +3,10 @@ import React from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { AlertTriangle, Check, Shield, CalendarDays, Database } from 'lucide-react';
+import { AlertTriangle, Check, Shield, CalendarDays, Database, FileText } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { exportBreachReport } from '@/utils/exportUtils';
+import { toast } from 'sonner';
 
 export interface BreachData {
   id: string;
@@ -60,6 +63,25 @@ const BreachCard: React.FC<BreachCardProps> = ({ breach }) => {
     }
   };
 
+  const handleExportBreachReport = () => {
+    toast.info(`Generating report for ${breach.title}...`);
+    
+    // Prepare the data in the format expected by the exportBreachReport function
+    const reportData = {
+      BreachName: breach.title,
+      Domain: breach.domain,
+      BreachDate: breach.breachDate,
+      Severity: breach.riskLevel,
+      AffectedData: breach.affectedData.join(', '),
+      Description: breach.description
+    };
+    
+    setTimeout(() => {
+      exportBreachReport(reportData, `breach-report-${breach.domain}`);
+      toast.success('Breach report has been generated and downloaded');
+    }, 500);
+  };
+
   return (
     <Card className="cyber-card overflow-hidden">
       <CardHeader className="pb-2">
@@ -106,6 +128,17 @@ const BreachCard: React.FC<BreachCardProps> = ({ breach }) => {
         </div>
         
         <p className="text-sm text-muted-foreground">{breach.description}</p>
+        
+        {/* Add Export Report button */}
+        <Button
+          variant="outline"
+          size="sm"
+          className="w-full text-cyber-primary border-cyber-primary/30 hover:bg-cyber-primary/10"
+          onClick={handleExportBreachReport}
+        >
+          <FileText className="h-4 w-4 mr-2" />
+          Export Report
+        </Button>
       </CardContent>
       <CardFooter className="flex items-center justify-between border-t border-cyber-primary/20 pt-4">
         {breach.verified ? (
