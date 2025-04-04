@@ -34,9 +34,10 @@ export interface Recommendation {
 
 interface RecommendationsListProps {
   recommendations: Recommendation[];
+  onComplete?: (id: string) => void; // Make this prop optional
 }
 
-const RecommendationsList: React.FC<RecommendationsListProps> = ({ recommendations }) => {
+const RecommendationsList: React.FC<RecommendationsListProps> = ({ recommendations, onComplete }) => {
   const [selectedRecommendation, setSelectedRecommendation] = useState<Recommendation | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
 
