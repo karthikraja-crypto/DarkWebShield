@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { FileText, Download } from 'lucide-react';
-import { exportReport, exportOverallReport } from '@/utils/exportUtils';
+import { exportReport, exportOverallReport, exportIndividualBreachReport } from '@/utils/exportUtils';
 import { toast } from 'sonner';
 import {
   DropdownMenu,
@@ -30,14 +30,19 @@ const ExportButton = ({
 }: ExportButtonProps) => {
   const [isExporting, setIsExporting] = useState(false);
 
-  const handleExport = async (format: 'csv' | 'pdf', isOverallReport: boolean = false) => {
+  const handleExport = async (format: 'csv' | 'pdf' | 'individual', isOverallReport: boolean = false) => {
     try {
       setIsExporting(true);
       
       // Simulate some processing time 
       await new Promise(resolve => setTimeout(resolve, 500));
       
-      if (isOverallReport) {
+      if (format === 'individual' && data.length > 0) {
+        // Export individual breach report
+        const breach = data[0]; // Get the first breach for individual report
+        exportIndividualBreachReport(breach, `darkwebshield-breach-report-${Date.now()}`);
+        toast.success('Individual breach report exported successfully');
+      } else if (isOverallReport) {
         // Process data for export - convert objects to structured format
         const processedData = data.map(item => ({
           Title: item.title || item.domain || 'Unknown',
@@ -123,6 +128,12 @@ const ExportButton = ({
           <DropdownMenuItem onClick={() => handleExport('pdf', true)}>
             <Download className="mr-2 h-4 w-4" />
             Export Overall Report
+          </DropdownMenuItem>
+        )}
+        {data.length === 1 && (
+          <DropdownMenuItem onClick={() => handleExport('individual')}>
+            <Download className="mr-2 h-4 w-4" />
+            Individual Breach Report
           </DropdownMenuItem>
         )}
         <DropdownMenuItem onClick={() => handleExport('csv')}>

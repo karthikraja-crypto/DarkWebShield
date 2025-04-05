@@ -367,6 +367,142 @@ export const exportToPDF = (data: any[], filename: string = 'export', options: E
 };
 
 /**
+ * Export an individual breach report in the specified format
+ */
+export const exportIndividualBreachReport = (breach: any, filename: string = 'individual-breach-report') => {
+  if (!breach) {
+    console.error('No breach data to export');
+    return;
+  }
+  
+  // Get user info from localStorage if available
+  let userData = null;
+  try {
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      userData = JSON.parse(storedUser);
+    }
+  } catch (e) {
+    console.error('Failed to parse user data:', e);
+  }
+  
+  // Create a temporary div for printing
+  const printContent = document.createElement('div');
+  printContent.style.display = 'none';
+  
+  const reportId = `DWS-${Date.now().toString().slice(-8)}`;
+  const breachId = breach.id || `B-${Date.now().toString().slice(-6)}`;
+  const currentDate = new Date().toLocaleString();
+  const breachDate = breach.breachDate ? new Date(breach.breachDate).toLocaleDateString() : 'Unknown';
+  const exposedData = Array.isArray(breach.affectedData) ? breach.affectedData.join(', ') : (breach.affectedData || 'Unknown');
+  const domain = breach.domain || breach.title || 'Unknown Service';
+  const passwordStatus = determinePasswordEncryption(breach);
+  const riskLevel = (breach.riskLevel || 'medium').toUpperCase();
+  const leakType = breach.source || 'Sold on dark web';
+  const exposedEmail = userData?.email || 'user@email.com';
+  const associatedIP = breach.ipAddress || 'Not available';
+  
+  // Generate the formatted individual report content
+  printContent.innerHTML = `
+    <html>
+      <head>
+        <title>${filename}</title>
+        <style>
+          body { font-family: Arial, sans-serif; margin: 0; padding: 20px; color: #333; line-height: 1.6; }
+          h1 { color: #2a4365; margin-bottom: 20px; }
+          h2 { color: #2a4365; border-bottom: 1px solid #eaeaea; padding-bottom: 8px; margin-top: 30px; }
+          .header { margin-bottom: 40px; }
+          .report-section { margin-bottom: 30px; background-color: #f8f9fa; padding: 20px; border-radius: 6px; }
+          .info-row { display: flex; margin-bottom: 10px; }
+          .info-label { font-weight: bold; width: 180px; }
+          .risk-high { color: #e53e3e; font-weight: bold; }
+          .risk-medium { color: #dd6b20; font-weight: bold; }
+          .risk-low { color: #38a169; font-weight: bold; }
+          .footer { margin-top: 40px; text-align: center; font-size: 12px; color: #666; border-top: 1px solid #eaeaea; padding-top: 20px; }
+          .logo { text-align: center; margin-bottom: 20px; }
+          .breach-header { background-color: #2a4365; color: white; padding: 15px; border-radius: 6px 6px 0 0; margin-bottom: 0; }
+          .actions { background-color: #f0fff4; border-left: 4px solid #38a169; }
+          .monitoring { background-color: #e6fffa; border-left: 4px solid #0694a2; }
+          .threat { background-color: #fff5f5; border-left: 4px solid #e53e3e; }
+        </style>
+      </head>
+      <body>
+        <div class="logo">
+          <h1 style="color: #2a4365;">DarkWebShield</h1>
+        </div>
+        
+        <div class="header">
+          <h1>🔐 DarkWebShield – Individual Breach Report</h1>
+          <div class="info-row"><div class="info-label">User:</div> ${userData?.name || 'Full Name'}</div>
+          <div class="info-row"><div class="info-label">Report ID:</div> ${reportId}</div>
+          <div class="info-row"><div class="info-label">Breach ID:</div> ${breachId}</div>
+          <div class="info-row"><div class="info-label">Generated On:</div> ${currentDate}</div>
+        </div>
+        
+        <h2 class="breach-header">🔹 Breach Details</h2>
+        <div class="report-section">
+          <div class="info-row"><div class="info-label">Breach Source:</div> ${domain}</div>
+          <div class="info-row"><div class="info-label">Breach Date:</div> Leaked on ${breachDate}</div>
+          <div class="info-row"><div class="info-label">Data Exposed:</div> ${exposedData}</div>
+          <div class="info-row"><div class="info-label">Password Status:</div> ${passwordStatus}</div>
+          <div class="info-row"><div class="info-label">Risk Level:</div> <span class="risk-${(breach.riskLevel || 'medium').toLowerCase()}">${riskLevel}</span></div>
+          <div class="info-row"><div class="info-label">Leak Type:</div> ${leakType}</div>
+          <div class="info-row"><div class="info-label">Exposed Email:</div> ${exposedEmail}</div>
+          <div class="info-row"><div class="info-label">Associated IP (if any):</div> ${associatedIP}</div>
+        </div>
+        
+        <h2>🔍 Threat Impact</h2>
+        <div class="report-section threat">
+          <p>Your account is at ${(breach.riskLevel || 'medium').toLowerCase()} risk of unauthorized access</p>
+          <p>This data may be used in:</p>
+          <ul>
+            <li>Credential stuffing attacks</li>
+            <li>Spam/phishing campaigns</li>
+            <li>Impersonation attempts</li>
+          </ul>
+          ${breach.description ? `<p><strong>Additional Details:</strong> ${breach.description}</p>` : ''}
+        </div>
+        
+        <h2>✅ Recommended Actions</h2>
+        <div class="report-section actions">
+          <ul>
+            <li>Change the password immediately on ${domain}</li>
+            <li>Update similar passwords used on other services</li>
+            <li>Enable 2FA on all critical accounts</li>
+            <li>Monitor financial transactions for fraud</li>
+            <li>Avoid using real data on unsecured sites</li>
+          </ul>
+        </div>
+        
+        <h2>🔁 Ongoing Monitoring</h2>
+        <div class="report-section monitoring">
+          <p>This breach will remain under active surveillance</p>
+          <p>You'll be notified if it's found in new dark web dumps</p>
+        </div>
+        
+        <div class="footer">
+          <p>📎 Confidentiality Note: This report contains sensitive personal information. Do not share or distribute without user consent.</p>
+          <p>© ${new Date().getFullYear()} DarkWebShield. All rights reserved.</p>
+        </div>
+      </body>
+    </html>
+  `;
+  
+  document.body.appendChild(printContent);
+  
+  // Store the current title
+  const originalTitle = document.title;
+  document.title = filename;
+  
+  // Print the div as PDF (using browser's print functionality)
+  window.print();
+  
+  // Reset title and remove the print content
+  document.title = originalTitle;
+  document.body.removeChild(printContent);
+};
+
+/**
  * Helper function to format header names
  */
 const formatHeader = (header: string): string => {
