@@ -1,6 +1,6 @@
 
-import React, { useContext, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useContext, useState, useEffect } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Shield, Menu, X, User, LogOut, Settings, Home, LayoutDashboard, Search, InfoIcon, Bell } from 'lucide-react';
 import { 
@@ -31,11 +31,28 @@ import { AuthContext } from '../App';
 import { toast } from 'sonner';
 
 const Navbar = () => {
-  const [isMenuOpen, setIsMenuOpen] = React.useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { isLoggedIn, user, logout } = useContext(AuthContext);
   const navigate = useNavigate();
+  const location = useLocation();
   const [userProfileOpen, setUserProfileOpen] = useState(false);
   const [theme, setTheme] = useState<'system' | 'light' | 'dark'>('system');
+  const [currentPathname, setCurrentPathname] = useState<string>('');
+
+  // Listen for storage events to update user info when changed
+  useEffect(() => {
+    const handleStorageEvent = () => {
+      // The user data was updated elsewhere, trigger a re-render
+      setCurrentPathname(location.pathname); // This is just to trigger a re-render
+    };
+
+    window.addEventListener('storage', handleStorageEvent);
+    setCurrentPathname(location.pathname);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageEvent);
+    };
+  }, [location]);
 
   const handleLogout = () => {
     logout();
@@ -55,6 +72,10 @@ const Navbar = () => {
     setUserProfileOpen(true);
   };
 
+  const isActive = (path: string) => {
+    return location.pathname === path;
+  };
+
   return (
     <nav className="sticky top-0 z-50 bg-cyber-dark/80 backdrop-blur-md border-b border-cyber-primary/20 py-3">
       <div className="container mx-auto px-4 flex justify-between items-center">
@@ -66,7 +87,11 @@ const Navbar = () => {
         </Link>
 
         {/* Mobile Menu Button */}
-        <button className="md:hidden" onClick={() => setIsMenuOpen(!isMenuOpen)}>
+        <button 
+          className="md:hidden p-2 rounded-md hover:bg-cyber-primary/10 transition-colors"
+          onClick={() => setIsMenuOpen(!isMenuOpen)}
+          aria-label={isMenuOpen ? "Close menu" : "Open menu"}
+        >
           {isMenuOpen ? (
             <X className="h-6 w-6 text-foreground" />
           ) : (
@@ -76,37 +101,79 @@ const Navbar = () => {
 
         {/* Desktop Navigation */}
         <div className="hidden md:flex items-center gap-6">
-          <Link to="/" className="text-sm font-medium text-foreground hover:text-cyber-primary transition-colors">
+          <Link 
+            to="/" 
+            className={`text-sm font-medium transition-colors relative px-3 py-2 rounded-md ${
+              isActive('/') 
+                ? 'text-cyber-primary bg-cyber-primary/10' 
+                : 'text-foreground hover:text-cyber-primary hover:bg-cyber-primary/5'
+            }`}
+          >
             <div className="flex items-center gap-1">
               <Home className="h-4 w-4" />
               <span>Home</span>
             </div>
           </Link>
-          <Link to="/dashboard" className="text-sm font-medium text-foreground hover:text-cyber-primary transition-colors">
+          <Link 
+            to="/dashboard" 
+            className={`text-sm font-medium transition-colors relative px-3 py-2 rounded-md ${
+              isActive('/dashboard') 
+                ? 'text-cyber-primary bg-cyber-primary/10' 
+                : 'text-foreground hover:text-cyber-primary hover:bg-cyber-primary/5'
+            }`}
+          >
             <div className="flex items-center gap-1">
               <LayoutDashboard className="h-4 w-4" />
               <span>Dashboard</span>
             </div>
           </Link>
-          <Link to="/scan" className="text-sm font-medium text-foreground hover:text-cyber-primary transition-colors">
+          <Link 
+            to="/scan" 
+            className={`text-sm font-medium transition-colors relative px-3 py-2 rounded-md ${
+              isActive('/scan') 
+                ? 'text-cyber-primary bg-cyber-primary/10' 
+                : 'text-foreground hover:text-cyber-primary hover:bg-cyber-primary/5'
+            }`}
+          >
             <div className="flex items-center gap-1">
               <Search className="h-4 w-4" />
               <span>New Scan</span>
             </div>
           </Link>
-          <Link to="/notifications" className="text-sm font-medium text-foreground hover:text-cyber-primary transition-colors">
+          <Link 
+            to="/notifications" 
+            className={`text-sm font-medium transition-colors relative px-3 py-2 rounded-md ${
+              isActive('/notifications') 
+                ? 'text-cyber-primary bg-cyber-primary/10' 
+                : 'text-foreground hover:text-cyber-primary hover:bg-cyber-primary/5'
+            }`}
+          >
             <div className="flex items-center gap-1">
               <Bell className="h-4 w-4" />
               <span>Notifications</span>
             </div>
           </Link>
-          <Link to="/settings" className="text-sm font-medium text-foreground hover:text-cyber-primary transition-colors">
+          <Link 
+            to="/settings" 
+            className={`text-sm font-medium transition-colors relative px-3 py-2 rounded-md ${
+              isActive('/settings') 
+                ? 'text-cyber-primary bg-cyber-primary/10' 
+                : 'text-foreground hover:text-cyber-primary hover:bg-cyber-primary/5'
+            }`}
+          >
             <div className="flex items-center gap-1">
               <Settings className="h-4 w-4" />
               <span>Settings</span>
             </div>
           </Link>
-          <Link to="/about" className="text-sm font-medium text-foreground hover:text-cyber-primary transition-colors">
+          <Link 
+            to="/about" 
+            className={`text-sm font-medium transition-colors relative px-3 py-2 rounded-md ${
+              isActive('/about') 
+                ? 'text-cyber-primary bg-cyber-primary/10' 
+                : 'text-foreground hover:text-cyber-primary hover:bg-cyber-primary/5'
+            }`}
+          >
             <div className="flex items-center gap-1">
               <InfoIcon className="h-4 w-4" />
               <span>About</span>
@@ -116,7 +183,10 @@ const Navbar = () => {
           {isLoggedIn && user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-10 w-10 rounded-full hover:bg-cyber-primary/10">
+                <Button 
+                  variant="ghost" 
+                  className="relative h-10 w-10 rounded-full hover:bg-cyber-primary/10 focus:ring-2 focus:ring-cyber-primary/30"
+                >
                   <Avatar className="h-10 w-10 border border-cyber-primary/30">
                     {user.avatar ? (
                       <AvatarImage src={user.avatar} alt={user.name} />
@@ -135,7 +205,7 @@ const Navbar = () => {
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuItem 
-                  className="cursor-pointer focus:bg-cyber-primary/10"
+                  className="cursor-pointer focus:bg-cyber-primary/10 focus:text-cyber-primary"
                   onClick={viewUserProfile}
                 >
                   <User className="mr-2 h-4 w-4" />
@@ -144,19 +214,28 @@ const Navbar = () => {
                 <DropdownMenuSeparator className="bg-cyber-primary/20" />
                 <DropdownMenuGroup>
                   <DropdownMenuItem asChild>
-                    <Link to="/dashboard" className="cursor-pointer flex items-center focus:bg-cyber-primary/10">
+                    <Link 
+                      to="/dashboard" 
+                      className="cursor-pointer flex items-center focus:bg-cyber-primary/10 focus:text-cyber-primary"
+                    >
                       <LayoutDashboard className="mr-2 h-4 w-4" />
                       <span>Dashboard</span>
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link to="/settings" className="cursor-pointer flex items-center focus:bg-cyber-primary/10">
+                    <Link 
+                      to="/settings" 
+                      className="cursor-pointer flex items-center focus:bg-cyber-primary/10 focus:text-cyber-primary"
+                    >
                       <Settings className="mr-2 h-4 w-4" />
                       <span>Settings</span>
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link to="/scan" className="cursor-pointer flex items-center focus:bg-cyber-primary/10">
+                    <Link 
+                      to="/scan" 
+                      className="cursor-pointer flex items-center focus:bg-cyber-primary/10 focus:text-cyber-primary"
+                    >
                       <Search className="mr-2 h-4 w-4" />
                       <span>New Scan</span>
                     </Link>
@@ -164,19 +243,19 @@ const Navbar = () => {
                 </DropdownMenuGroup>
                 <DropdownMenuSeparator className="bg-cyber-primary/20" />
                 <DropdownMenuSub>
-                  <DropdownMenuSubTrigger className="cursor-pointer focus:bg-cyber-primary/10">
+                  <DropdownMenuSubTrigger className="cursor-pointer focus:bg-cyber-primary/10 focus:text-cyber-primary">
                     <span>Theme</span>
                   </DropdownMenuSubTrigger>
                   <DropdownMenuPortal>
                     <DropdownMenuSubContent className="bg-cyber-dark border border-cyber-primary/20">
                       <DropdownMenuRadioGroup value={theme} onValueChange={(value) => setTheme(value as any)}>
-                        <DropdownMenuRadioItem value="light" className="cursor-pointer focus:bg-cyber-primary/10">
+                        <DropdownMenuRadioItem value="light" className="cursor-pointer focus:bg-cyber-primary/10 focus:text-cyber-primary">
                           Light
                         </DropdownMenuRadioItem>
-                        <DropdownMenuRadioItem value="dark" className="cursor-pointer focus:bg-cyber-primary/10">
+                        <DropdownMenuRadioItem value="dark" className="cursor-pointer focus:bg-cyber-primary/10 focus:text-cyber-primary">
                           Dark
                         </DropdownMenuRadioItem>
-                        <DropdownMenuRadioItem value="system" className="cursor-pointer focus:bg-cyber-primary/10">
+                        <DropdownMenuRadioItem value="system" className="cursor-pointer focus:bg-cyber-primary/10 focus:text-cyber-primary">
                           System
                         </DropdownMenuRadioItem>
                       </DropdownMenuRadioGroup>
@@ -186,7 +265,7 @@ const Navbar = () => {
                 <DropdownMenuSeparator className="bg-cyber-primary/20" />
                 <DropdownMenuItem 
                   onClick={handleLogout} 
-                  className="cursor-pointer text-cyber-danger focus:bg-cyber-primary/10"
+                  className="cursor-pointer text-cyber-danger focus:bg-cyber-danger/10"
                 >
                   <LogOut className="mr-2 h-4 w-4" />
                   <span>Log out</span>
@@ -196,12 +275,17 @@ const Navbar = () => {
           ) : (
             <div className="flex gap-2">
               <Link to="/login">
-                <Button variant="outline" className="border-cyber-primary/50 text-cyber-primary hover:bg-cyber-primary/10">
+                <Button 
+                  variant="outline" 
+                  className="border-cyber-primary/50 text-cyber-primary hover:bg-cyber-primary/10 active:scale-95 transition-transform"
+                >
                   Log In
                 </Button>
               </Link>
               <Link to="/signup">
-                <Button className="bg-cyber-primary text-cyber-dark hover:bg-cyber-primary/80">
+                <Button 
+                  className="bg-cyber-primary text-cyber-dark hover:bg-cyber-primary/80 active:scale-95 transition-transform"
+                >
                   Sign Up
                 </Button>
               </Link>
@@ -212,10 +296,14 @@ const Navbar = () => {
 
       {/* Mobile Menu */}
       {isMenuOpen && (
-        <div className="md:hidden absolute top-full left-0 right-0 bg-cyber-dark border-b border-cyber-primary/20 py-4 px-4 space-y-3">
+        <div className="md:hidden absolute top-full left-0 right-0 bg-cyber-dark border-b border-cyber-primary/20 py-4 px-4 space-y-3 animate-fade-in">
           <Link 
             to="/" 
-            className="block p-2 text-sm font-medium text-foreground hover:bg-cyber-primary/10 rounded-md"
+            className={`block p-2 text-sm font-medium rounded-md ${
+              isActive('/') 
+                ? 'text-cyber-primary bg-cyber-primary/10' 
+                : 'text-foreground hover:bg-cyber-primary/10 active:bg-cyber-primary/20 transition-colors'
+            }`}
             onClick={() => setIsMenuOpen(false)}
           >
             <div className="flex items-center gap-2">
@@ -225,7 +313,11 @@ const Navbar = () => {
           </Link>
           <Link 
             to="/dashboard" 
-            className="block p-2 text-sm font-medium text-foreground hover:bg-cyber-primary/10 rounded-md"
+            className={`block p-2 text-sm font-medium rounded-md ${
+              isActive('/dashboard') 
+                ? 'text-cyber-primary bg-cyber-primary/10' 
+                : 'text-foreground hover:bg-cyber-primary/10 active:bg-cyber-primary/20 transition-colors'
+            }`}
             onClick={() => setIsMenuOpen(false)}
           >
             <div className="flex items-center gap-2">
@@ -235,7 +327,11 @@ const Navbar = () => {
           </Link>
           <Link 
             to="/scan" 
-            className="block p-2 text-sm font-medium text-foreground hover:bg-cyber-primary/10 rounded-md"
+            className={`block p-2 text-sm font-medium rounded-md ${
+              isActive('/scan') 
+                ? 'text-cyber-primary bg-cyber-primary/10' 
+                : 'text-foreground hover:bg-cyber-primary/10 active:bg-cyber-primary/20 transition-colors'
+            }`}
             onClick={() => setIsMenuOpen(false)}
           >
             <div className="flex items-center gap-2">
@@ -245,7 +341,11 @@ const Navbar = () => {
           </Link>
           <Link 
             to="/notifications" 
-            className="block p-2 text-sm font-medium text-foreground hover:bg-cyber-primary/10 rounded-md"
+            className={`block p-2 text-sm font-medium rounded-md ${
+              isActive('/notifications') 
+                ? 'text-cyber-primary bg-cyber-primary/10' 
+                : 'text-foreground hover:bg-cyber-primary/10 active:bg-cyber-primary/20 transition-colors'
+            }`}
             onClick={() => setIsMenuOpen(false)}
           >
             <div className="flex items-center gap-2">
@@ -255,7 +355,11 @@ const Navbar = () => {
           </Link>
           <Link 
             to="/settings" 
-            className="block p-2 text-sm font-medium text-foreground hover:bg-cyber-primary/10 rounded-md"
+            className={`block p-2 text-sm font-medium rounded-md ${
+              isActive('/settings') 
+                ? 'text-cyber-primary bg-cyber-primary/10' 
+                : 'text-foreground hover:bg-cyber-primary/10 active:bg-cyber-primary/20 transition-colors'
+            }`}
             onClick={() => setIsMenuOpen(false)}
           >
             <div className="flex items-center gap-2">
@@ -265,7 +369,11 @@ const Navbar = () => {
           </Link>
           <Link 
             to="/about" 
-            className="block p-2 text-sm font-medium text-foreground hover:bg-cyber-primary/10 rounded-md"
+            className={`block p-2 text-sm font-medium rounded-md ${
+              isActive('/about') 
+                ? 'text-cyber-primary bg-cyber-primary/10' 
+                : 'text-foreground hover:bg-cyber-primary/10 active:bg-cyber-primary/20 transition-colors'
+            }`}
             onClick={() => setIsMenuOpen(false)}
           >
             <div className="flex items-center gap-2">
@@ -296,7 +404,7 @@ const Navbar = () => {
               <div className="pt-2">
                 <Button 
                   variant="ghost" 
-                  className="w-full justify-start text-cyber-danger"
+                  className="w-full justify-start text-cyber-danger hover:bg-cyber-danger/10 active:bg-cyber-danger/20"
                   onClick={() => {
                     handleLogout();
                     setIsMenuOpen(false);
@@ -310,12 +418,17 @@ const Navbar = () => {
           ) : (
             <div className="flex flex-col gap-2 pt-2">
               <Link to="/login" onClick={() => setIsMenuOpen(false)}>
-                <Button variant="outline" className="w-full border-cyber-primary/50 text-cyber-primary hover:bg-cyber-primary/10">
+                <Button 
+                  variant="outline" 
+                  className="w-full border-cyber-primary/50 text-cyber-primary hover:bg-cyber-primary/10 active:bg-cyber-primary/20"
+                >
                   Log In
                 </Button>
               </Link>
               <Link to="/signup" onClick={() => setIsMenuOpen(false)}>
-                <Button className="w-full bg-cyber-primary text-cyber-dark hover:bg-cyber-primary/80">
+                <Button 
+                  className="w-full bg-cyber-primary text-cyber-dark hover:bg-cyber-primary/80 active:bg-cyber-primary/90"
+                >
                   Sign Up
                 </Button>
               </Link>
@@ -381,7 +494,7 @@ const Navbar = () => {
                 <div className="flex gap-2">
                   <Button 
                     variant="outline" 
-                    className="flex-1 border-cyber-primary/50 text-cyber-primary hover:bg-cyber-primary/10"
+                    className="flex-1 border-cyber-primary/50 text-cyber-primary hover:bg-cyber-primary/10 active:scale-95 transition-transform"
                     onClick={() => {
                       navigate('/settings');
                       setUserProfileOpen(false);
@@ -390,7 +503,7 @@ const Navbar = () => {
                     Account Settings
                   </Button>
                   <Button 
-                    className="flex-1 bg-cyber-primary text-cyber-dark hover:bg-cyber-primary/80"
+                    className="flex-1 bg-cyber-primary text-cyber-dark hover:bg-cyber-primary/80 active:scale-95 transition-transform"
                     onClick={() => {
                       toast.success('Profile updated successfully');
                       setUserProfileOpen(false);

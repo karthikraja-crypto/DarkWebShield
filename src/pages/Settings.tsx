@@ -1,4 +1,3 @@
-
 import React, { useContext, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -16,7 +15,7 @@ import { AuthContext } from '../App';
 
 const Settings = () => {
   // Get auth context
-  const { user, logout } = useContext(AuthContext);
+  const { user, logout, updateUser } = useContext(AuthContext);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -45,8 +44,28 @@ const Settings = () => {
     }
   }, [location.state]);
 
+  // Update local user data when user context changes
+  useEffect(() => {
+    if (user) {
+      setUserData(prev => ({
+        ...prev,
+        name: user.name || prev.name,
+        email: user.email || prev.email
+      }));
+    }
+  }, [user]);
+
   const handleUpdateProfile = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (updateUser) {
+      updateUser({
+        name: userData.name,
+        email: userData.email,
+        avatar: user?.avatar
+      });
+    }
+    
     toast.success('Profile updated successfully!');
   };
 

@@ -32,6 +32,7 @@ type AuthContextType = {
   login: (userData: User) => void;
   logout: () => void;
   user: User | null;
+  updateUser?: (userData: Partial<User>) => void;
 };
 
 // Create auth context with default values
@@ -78,9 +79,20 @@ const App: React.FC = () => {
     window.dispatchEvent(new Event('storage'));
   };
 
+  // Update user function
+  const updateUser = (userData: Partial<User>) => {
+    if (user) {
+      const updatedUser = { ...user, ...userData };
+      setUser(updatedUser);
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+      // Dispatch an event so other components can react
+      window.dispatchEvent(new Event('storage'));
+    }
+  };
+
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthContext.Provider value={{ isLoggedIn, login, logout, user }}>
+      <AuthContext.Provider value={{ isLoggedIn, login, logout, user, updateUser }}>
         <TooltipProvider>
           <Toaster />
           <Sonner />
