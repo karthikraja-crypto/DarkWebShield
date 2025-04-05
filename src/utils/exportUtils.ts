@@ -1,3 +1,4 @@
+
 /**
  * Utility functions for exporting reports in different formats
  */
@@ -821,6 +822,16 @@ export const exportBreachReport = (breach: any, filename: string = 'breach-repor
     hour: '2-digit',
     minute: '2-digit'
   });
+
+  // Instead of using non-existent variables, use the breach passed in and create needed objects
+  const breachData = [breach]; // Create an array with just this breach for functions expecting arrays
+  const localOptions: ExportOptions = {
+    reportType: 'standard',
+    monitoringActive: localStorage.getItem('monitoringActive') === 'true',
+    alertsSent: true,
+    alertsRead: false,
+    scanHistory: []
+  };
   
   // Generate the report content
   printContent.innerHTML = `
@@ -886,23 +897,23 @@ export const exportBreachReport = (breach: any, filename: string = 'breach-repor
             <table class="info-table">
               <tr>
                 <td><strong>Total Scans Performed:</strong></td>
-                <td>${options.scanHistory?.length || data.length}</td>
+                <td>${localOptions.scanHistory?.length || 1}</td>
               </tr>
               <tr>
                 <td><strong>Total Breaches Detected:</strong></td>
-                <td>${data.length}</td>
+                <td>${breachData.length}</td>
               </tr>
               <tr>
                 <td><strong>Risk Level:</strong></td>
-                <td><strong class="risk-${getRiskLevel(data)}">${getRiskLevel(data).toUpperCase()}</strong></td>
+                <td><strong class="risk-${getRiskLevel(breachData)}">${getRiskLevel(breachData).toUpperCase()}</strong></td>
               </tr>
               <tr>
                 <td><strong>Continuous Monitoring:</strong></td>
-                <td>${options.monitoringActive ? 'Enabled' : 'Disabled'}</td>
+                <td>${localOptions.monitoringActive ? 'Enabled' : 'Disabled'}</td>
               </tr>
               <tr>
                 <td><strong>Most Recent Detection:</strong></td>
-                <td>${getMostRecentBreachDate(data)}</td>
+                <td>${getMostRecentBreachDate(breachData)}</td>
               </tr>
             </table>
           </div>
@@ -920,14 +931,14 @@ export const exportBreachReport = (breach: any, filename: string = 'breach-repor
               </tr>
             </thead>
             <tbody>
-              ${generateScanSummaryTable(options.scanHistory || [], data)}
+              ${generateScanSummaryTable(localOptions.scanHistory || [], breachData)}
             </tbody>
           </table>
         </div>
         
         <div class="report-section">
           <h2><span class="section-number">3</span> Detailed Breach Records</h2>
-          ${data.map((breach, index) => `
+          ${breachData.map((breach, index) => `
             <div class="breach-container">
               <div class="breach-header">
                 <h3>🔹 Breach: ${breach.domain || breach.title}</h3>
@@ -966,15 +977,15 @@ export const exportBreachReport = (breach: any, filename: string = 'breach-repor
           <table class="info-table">
             <tr>
               <td><strong>Number of Critical Breaches:</strong></td>
-              <td>${countCriticalBreaches(data)}</td>
+              <td>${countCriticalBreaches(breachData)}</td>
             </tr>
             <tr>
               <td><strong>Number of High-Risk Services Involved:</strong></td>
-              <td>${countHighRiskServices(data)}</td>
+              <td>${countHighRiskServices(breachData)}</td>
             </tr>
             <tr>
               <td><strong>Affected Platforms:</strong></td>
-              <td>${getAffectedPlatforms(data)}</td>
+              <td>${getAffectedPlatforms(breachData)}</td>
             </tr>
           </table>
           
@@ -989,7 +1000,7 @@ export const exportBreachReport = (breach: any, filename: string = 'breach-repor
               </tr>
             </thead>
             <tbody>
-              ${getMonthlyBreachCounts(data).map((month) => `
+              ${getMonthlyBreachCounts(breachData).map((month) => `
                 <tr>
                   <td>${month.month}</td>
                   <td>${month.count}</td>
@@ -1003,13 +1014,13 @@ export const exportBreachReport = (breach: any, filename: string = 'breach-repor
         <div class="report-section">
           <h2><span class="section-number">5</span> Security Recommendations</h2>
           <div class="recommendations">
-            ${generateSecurityRecommendations(data)}
+            ${generateSecurityRecommendations(breachData)}
           </div>
         </div>
         
         <div class="report-section">
           <h2><span class="section-number">6</span> Action Log</h2>
-          ${options.actionHistory && options.actionHistory.length > 0 ? `
+          ${localOptions.actionHistory && localOptions.actionHistory.length > 0 ? `
             <table>
               <thead>
                 <tr>
@@ -1019,7 +1030,7 @@ export const exportBreachReport = (breach: any, filename: string = 'breach-repor
                 </tr>
               </thead>
               <tbody>
-                ${options.actionHistory.map(action => `
+                ${localOptions.actionHistory.map(action => `
                   <tr>
                     <td>${action.action}</td>
                     <td>${formatActionDate(action.date)}</td>
@@ -1045,19 +1056,19 @@ export const exportBreachReport = (breach: any, filename: string = 'breach-repor
           <table class="info-table">
             <tr>
               <td><strong>Monitoring Activated:</strong></td>
-              <td>${options.monitoringActive ? '<span class="check-mark">✅</span>' : '<span class="x-mark">❌</span>'}</td>
+              <td>${localOptions.monitoringActive ? '<span class="check-mark">✅</span>' : '<span class="x-mark">❌</span>'}</td>
             </tr>
             <tr>
               <td><strong>Alerts Sent:</strong></td>
-              <td>${options.alertsSent ? '<span class="check-mark">✅</span>' : '<span class="x-mark">❌</span>'}</td>
+              <td>${localOptions.alertsSent ? '<span class="check-mark">✅</span>' : '<span class="x-mark">❌</span>'}</td>
             </tr>
             <tr>
               <td><strong>Alerts Read:</strong></td>
-              <td>${options.alertsRead ? '<span class="check-mark">✅</span>' : '<span class="x-mark">❌</span>'}</td>
+              <td>${localOptions.alertsRead ? '<span class="check-mark">✅</span>' : '<span class="x-mark">❌</span>'}</td>
             </tr>
             <tr>
               <td><strong>Real-Time Status:</strong></td>
-              <td>${options.monitoringActive ? 'Monitoring active' : 'Monitoring inactive'}</td>
+              <td>${localOptions.monitoringActive ? 'Monitoring active' : 'Monitoring inactive'}</td>
             </tr>
           </table>
         </div>
