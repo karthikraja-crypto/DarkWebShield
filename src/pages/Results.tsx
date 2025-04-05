@@ -158,8 +158,15 @@ const Results = () => {
       Description: rec.description
     }));
     
+    // Mock scan history data
+    const scanHistoryData = [
+      { date: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(), breachesFound: 2 },
+      { date: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(), breachesFound: 1 },
+      { date: new Date().toISOString(), breachesFound: breaches.length }
+    ];
+    
     setTimeout(() => {
-      exportOverallReport(reportData, recommendationsData, [], 'darkwebshield-scan-results');
+      exportOverallReport(reportData, recommendationsData, scanHistoryData, 'darkwebshield-scan-results');
       toast.success('Comprehensive security report has been generated and downloaded');
     }, 1000);
   };
@@ -251,17 +258,15 @@ const Results = () => {
               />
               <RecommendationsList recommendations={recommendations} />
               
-              {/* Update ScanResultExport to show "Overall Report" */}
-              <ScanResultExport results={[
-                ...breaches.map(breach => ({
-                  BreachName: breach.title,
-                  Domain: breach.domain,
-                  BreachDate: breach.breachDate,
-                  Severity: breach.riskLevel,
-                  AffectedData: breach.affectedData.join(', '),
-                  Description: breach.description.substring(0, 100) + '...'
-                }))
-              ]} />
+              {/* Update ScanResultExport with proper data */}
+              <ScanResultExport results={breaches.map(breach => ({
+                BreachName: breach.title,
+                Domain: breach.domain,
+                BreachDate: breach.breachDate,
+                Severity: breach.riskLevel,
+                AffectedData: breach.affectedData.join(', '),
+                Description: breach.description.substring(0, 100) + '...'
+              }))} />
             </div>
           </div>
         </div>

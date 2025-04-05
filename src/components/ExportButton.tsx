@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { FileText, Download } from 'lucide-react';
@@ -41,6 +42,17 @@ const ExportButton = ({
         exportReport([data[0]], format, `darkwebshield-breach-report-${Date.now()}`);
         toast.success('Individual breach report exported successfully');
       } else if (isOverallReport) {
+        // Get user info from localStorage
+        let userData = null;
+        try {
+          const storedUser = localStorage.getItem('user');
+          if (storedUser) {
+            userData = JSON.parse(storedUser);
+          }
+        } catch (e) {
+          console.error('Failed to parse user data:', e);
+        }
+        
         // Process data for export - convert objects to structured format
         const processedData = data.map(item => ({
           Title: item.title || item.domain || 'Unknown',
