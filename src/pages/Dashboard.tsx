@@ -155,30 +155,34 @@ const Dashboard = () => {
   const handleGenerateOverallReport = () => {
     toast.info('Generating comprehensive security report...');
     
-    // Prepare the report data
+    // Prepare the report data with detailed information
     const reportData = breaches.map(breach => ({
-      Title: breach.title,
-      Domain: breach.domain,
-      Date: new Date(breach.breachDate).toLocaleDateString(),
-      Risk: breach.riskLevel.toUpperCase(),
-      AffectedData: breach.affectedData.join(', '),
-      Description: breach.description
+      title: breach.title,
+      domain: breach.domain,
+      breachDate: breach.breachDate,
+      riskLevel: breach.riskLevel,
+      affectedData: breach.affectedData,
+      description: breach.description,
+      verified: breach.verified,
+      source: 'Dark Web Scan'
     }));
     
-    // Prepare recommendations data
+    // Prepare recommendations data with full objects
     const recommendationsData = recommendations.map(rec => ({
-      Title: rec.title,
-      Priority: rec.priority,
-      Status: rec.completed ? 'Completed' : 'Pending',
-      Description: rec.description
+      title: rec.title,
+      priority: rec.priority,
+      completed: rec.completed,
+      description: rec.description,
+      icon: rec.icon
     }));
     
-    // Prepare scan history data
+    // Prepare scan history data with full objects 
     const historyData = scanHistory.map(scan => ({
-      Date: new Date(scan.date).toLocaleDateString(),
-      Type: scan.type,
-      Value: scan.value,
-      BreachesFound: scan.breachesFound
+      date: scan.date,
+      type: scan.type,
+      value: scan.value,
+      breachesFound: scan.breachesFound,
+      id: scan.id
     }));
     
     setTimeout(() => {

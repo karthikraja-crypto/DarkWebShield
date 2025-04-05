@@ -38,17 +38,53 @@ const ExportButton = ({
       await new Promise(resolve => setTimeout(resolve, 500));
       
       if (isOverallReport) {
-        // Export comprehensive report
+        // Process data for export - convert objects to structured format
+        const processedData = data.map(item => ({
+          Title: item.title || item.domain || 'Unknown',
+          Domain: item.domain || 'Unknown',
+          Date: item.breachDate ? new Date(item.breachDate).toLocaleDateString() : 'Unknown',
+          Risk: (item.riskLevel || 'medium').toUpperCase(),
+          AffectedData: Array.isArray(item.affectedData) ? item.affectedData.join(', ') : (item.affectedData || 'Unknown'),
+          Description: item.description || 'No detailed information available'
+        }));
+        
+        // Process recommendations data
+        const processedRecommendations = recommendationsData.map(rec => ({
+          Title: rec.title || 'Unknown',
+          Priority: rec.priority || 'medium',
+          Status: rec.completed ? 'Completed' : 'Pending',
+          Description: rec.description || ''
+        }));
+        
+        // Export comprehensive report with processed data
         exportOverallReport(
-          data, 
-          recommendationsData, 
+          processedData, 
+          processedRecommendations, 
           historyData, 
           `darkwebshield-overall-report-${Date.now()}`
         );
         toast.success('Comprehensive security report exported successfully');
       } else {
-        // Export regular report
-        exportReport(data, format, `darkwebshield-report-${Date.now()}`, {
+        // Process data for standard export
+        const processedData = data.map(item => {
+          // Convert any complex object structures to a flat format for export
+          const flatItem: Record<string, any> = {};
+          Object.entries(item).forEach(([key, value]) => {
+            if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+              Object.entries(value).forEach(([subKey, subValue]) => {
+                flatItem[`${key}_${subKey}`] = subValue;
+              });
+            } else if (Array.isArray(value)) {
+              flatItem[key] = value.join(', ');
+            } else {
+              flatItem[key] = value;
+            }
+          });
+          return flatItem;
+        });
+        
+        // Export regular report with processed data
+        exportReport(processedData, format, `darkwebshield-report-${Date.now()}`, {
           reportType: 'standard'
         });
         toast.success(`Report exported successfully as ${format.toUpperCase()}`);

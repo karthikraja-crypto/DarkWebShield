@@ -7,9 +7,16 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 interface ScanResultExportProps {
   results: any[];
   className?: string;
+  recommendationsData?: any[];
+  historyData?: any[];
 }
 
-const ScanResultExport = ({ results, className }: ScanResultExportProps) => {
+const ScanResultExport = ({ 
+  results, 
+  recommendationsData = [],
+  historyData = [],
+  className 
+}: ScanResultExportProps) => {
   return (
     <Card className={`cyber-card ${className || ''}`}>
       <CardHeader>
@@ -17,6 +24,8 @@ const ScanResultExport = ({ results, className }: ScanResultExportProps) => {
           <span>Export Options</span>
           <ExportButton 
             data={results} 
+            recommendationsData={recommendationsData}
+            historyData={historyData}
             variant="outline" 
             className="border-cyber-primary/50 text-cyber-primary hover:bg-cyber-primary/10"
             showOverallReport={results.length > 0}
