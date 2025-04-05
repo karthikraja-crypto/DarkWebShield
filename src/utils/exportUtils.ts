@@ -877,7 +877,7 @@ export interface ExportOptions {
  */
 export const exportReport = (
   data: any[], 
-  format: 'csv' | 'pdf' = 'csv', 
+  format: 'csv' | 'pdf' | 'individual' = 'csv', 
   filename: string = 'security-report', 
   options: ExportOptions = {}
 ) => {
@@ -885,13 +885,15 @@ export const exportReport = (
     exportToCSV(data, filename);
   } else if (format === 'pdf') {
     exportToPDF(data, filename, options);
+  } else if (format === 'individual' && data.length > 0) {
+    exportIndividualBreachReport(data[0], filename);
   } else {
     console.error('Unsupported export format');
   }
 };
 
 /**
- * Export a comprehensive overall report with all data
+ * Export an overall report with all data
  */
 export const exportOverallReport = (
   breaches: any[],

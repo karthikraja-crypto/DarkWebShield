@@ -1,8 +1,7 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { FileText, Download } from 'lucide-react';
-import { exportReport, exportOverallReport, exportIndividualBreachReport } from '@/utils/exportUtils';
+import { exportReport, exportOverallReport } from '@/utils/exportUtils';
 import { toast } from 'sonner';
 import {
   DropdownMenu,
@@ -38,9 +37,8 @@ const ExportButton = ({
       await new Promise(resolve => setTimeout(resolve, 500));
       
       if (format === 'individual' && data.length > 0) {
-        // Export individual breach report
-        const breach = data[0]; // Get the first breach for individual report
-        exportIndividualBreachReport(breach, `darkwebshield-breach-report-${Date.now()}`);
+        // Export individual breach report using the unified exportReport function
+        exportReport([data[0]], format, `darkwebshield-breach-report-${Date.now()}`);
         toast.success('Individual breach report exported successfully');
       } else if (isOverallReport) {
         // Process data for export - convert objects to structured format
