@@ -1,4 +1,3 @@
-
 /**
  * Utility functions for exporting reports in different formats
  */
@@ -823,8 +822,10 @@ export const exportBreachReport = (breach: any, filename: string = 'breach-repor
     minute: '2-digit'
   });
 
-  // Instead of using non-existent variables, use the breach passed in and create needed objects
-  const breachData = [breach]; // Create an array with just this breach for functions expecting arrays
+  // Create an array with just this breach for functions expecting arrays
+  const breachData = [breach];
+  
+  // Define options for the report
   const localOptions: ExportOptions = {
     reportType: 'standard',
     monitoringActive: localStorage.getItem('monitoringActive') === 'true',
