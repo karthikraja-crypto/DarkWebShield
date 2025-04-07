@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { AlertTriangle, Check, Shield, CalendarDays, Database, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { exportBreachReport } from '@/utils/exportUtils';
+import { exportReport } from '@/utils/exportUtils';
 import { toast } from 'sonner';
 
 export interface BreachData {
@@ -66,7 +66,7 @@ const BreachCard: React.FC<BreachCardProps> = ({ breach }) => {
   const handleExportBreachReport = () => {
     toast.info(`Generating report for ${breach.title}...`);
     
-    // Prepare the data in the format expected by the exportBreachReport function
+    // Prepare the data in the format expected by the exportReport function
     const reportData = {
       BreachName: breach.title,
       Domain: breach.domain,
@@ -77,7 +77,7 @@ const BreachCard: React.FC<BreachCardProps> = ({ breach }) => {
     };
     
     setTimeout(() => {
-      exportBreachReport(reportData, `breach-report-${breach.domain}`);
+      exportReport([reportData], 'individual', `breach-report-${breach.domain}`);
       toast.success('Breach report has been generated and downloaded');
     }, 500);
   };
