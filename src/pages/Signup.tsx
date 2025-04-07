@@ -1,6 +1,6 @@
 
-import React, { useContext, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useContext, useState, useEffect } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -13,12 +13,23 @@ import Footer from '@/components/Footer';
 import { AuthContext } from '../App';
 
 const Signup = () => {
-  const { login } = useContext(AuthContext);
+  const { login, isLoggedIn } = useContext(AuthContext);
   const navigate = useNavigate();
+  const location = useLocation();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
+  // Get redirect path from location state
+  const from = location.state?.from || '/dashboard';
+
+  // If already logged in, redirect to dashboard
+  useEffect(() => {
+    if (isLoggedIn) {
+      navigate(from, { replace: true });
+    }
+  }, [isLoggedIn, navigate, from]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,8 +44,8 @@ const Signup = () => {
           email: email,
         });
         
-        toast.success('Account created successfully! Redirecting to dashboard...');
-        navigate('/dashboard');
+        toast.success('Account created successfully! Redirecting...');
+        navigate(from, { replace: true });
         setIsLoading(false);
       }, 1000);
     } catch (error) {
@@ -55,8 +66,8 @@ const Signup = () => {
         avatar: 'https://api.dicebear.com/6.x/micah/svg?seed=John',
       });
       
-      toast.success('Google signup successful! Redirecting to dashboard...');
-      navigate('/dashboard');
+      toast.success('Google signup successful! Redirecting...');
+      navigate(from, { replace: true });
       setIsLoading(false);
     }, 1000);
   };

@@ -47,6 +47,7 @@ export const AuthContext = createContext<AuthContextType>({
 const App: React.FC = () => {
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
   const [user, setUser] = useState<User | null>(null);
+  const [isInitialized, setIsInitialized] = useState<boolean>(false);
 
   // Check login status on mount
   useEffect(() => {
@@ -57,6 +58,9 @@ const App: React.FC = () => {
       setIsLoggedIn(true);
       setUser(JSON.parse(storedUser));
     }
+    
+    // Mark auth as initialized
+    setIsInitialized(true);
   }, []);
 
   // Login function that will be used across the app
@@ -90,6 +94,11 @@ const App: React.FC = () => {
     }
   };
 
+  // Don't render routes until auth state is initialized
+  if (!isInitialized) {
+    return null; // Or a loading spinner
+  }
+
   return (
     <QueryClientProvider client={queryClient}>
       <AuthContext.Provider value={{ isLoggedIn, login, logout, user, updateUser }}>
@@ -100,21 +109,21 @@ const App: React.FC = () => {
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/dashboard" element={
-                isLoggedIn ? <Dashboard /> : <Navigate to="/login" replace />
+                isLoggedIn ? <Dashboard /> : <Navigate to="/login" replace state={{ from: '/dashboard' }} />
               } />
               <Route path="/scan" element={
-                isLoggedIn ? <Scan /> : <Navigate to="/login" replace />
+                isLoggedIn ? <Scan /> : <Navigate to="/login" replace state={{ from: '/scan' }} />
               } />
               <Route path="/results" element={
-                isLoggedIn ? <Results /> : <Navigate to="/login" replace />
+                isLoggedIn ? <Results /> : <Navigate to="/login" replace state={{ from: '/results' }} />
               } />
               <Route path="/notifications" element={
-                isLoggedIn ? <Notifications /> : <Navigate to="/login" replace />
+                isLoggedIn ? <Notifications /> : <Navigate to="/login" replace state={{ from: '/notifications' }} />
               } />
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<Signup />} />
               <Route path="/settings" element={
-                isLoggedIn ? <Settings /> : <Navigate to="/login" replace />
+                isLoggedIn ? <Settings /> : <Navigate to="/login" replace state={{ from: '/settings' }} />
               } />
               <Route path="/about" element={<About />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
