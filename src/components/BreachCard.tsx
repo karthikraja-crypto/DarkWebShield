@@ -83,7 +83,7 @@ const BreachCard: React.FC<BreachCardProps> = ({ breach }) => {
         toast.success('Breach report has been generated and downloaded');
         
         // If we're in development mode and the page needs a refresh
-        if (process.env.NODE_ENV === 'development' && window.refreshApp) {
+        if (process.env.NODE_ENV === 'development' && typeof window.refreshApp === 'function') {
           setTimeout(() => {
             toast.info('Refreshing page data...');
           }, 500);

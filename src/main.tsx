@@ -30,4 +30,4 @@ root.render(
 );
 
 // Make refresh function available globally (for debugging purposes)
-window.refreshApp = refreshApp;
+(window as Window).refreshApp = refreshApp;
