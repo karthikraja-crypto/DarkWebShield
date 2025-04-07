@@ -98,9 +98,9 @@ const ScanForm = () => {
   };
 
   return (
-    <Card className="cyber-card w-full max-w-md mx-auto">
+    <Card className="cyber-card w-full">
       <CardHeader>
-        <CardTitle className="text-cyber-primary">Dark Web Scan</CardTitle>
+        <CardTitle className="text-cyber-primary">Personal Info Scan</CardTitle>
         <CardDescription>
           Check if your personal information has been exposed in data breaches
         </CardDescription>
