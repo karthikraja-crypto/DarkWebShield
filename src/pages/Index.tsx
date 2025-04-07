@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -9,17 +9,23 @@ import FeatureDetails from '@/components/FeatureDetails';
 import { toast } from 'sonner';
 
 const Index = () => {
+  console.log('Index page rendering');
+  
   const navigate = useNavigate();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   // Check if user is logged in for demo purposes
   // In a real app, this would use a proper auth state management system
-  React.useEffect(() => {
+  useEffect(() => {
+    console.log('Index useEffect running');
+    
     // Simulate getting login state - this would be replaced with actual auth check
     const checkLoginStatus = () => {
+      console.log('Checking login status');
       // For demo: check if we have a stored login state
       const loginState = localStorage.getItem('isLoggedIn');
       setIsLoggedIn(loginState === 'true');
+      console.log('Login state:', loginState === 'true');
     };
     
     checkLoginStatus();
@@ -33,6 +39,7 @@ const Index = () => {
   }, []);
 
   const handleStartScan = () => {
+    console.log('Start scan clicked, isLoggedIn:', isLoggedIn);
     if (isLoggedIn) {
       navigate('/scan');
     } else {
@@ -83,8 +90,6 @@ const Index = () => {
                   </p>
                 </div>
               )}
-              
-              {/* Image has been removed as requested */}
             </div>
           </div>
         </section>
