@@ -76,9 +76,22 @@ const BreachCard: React.FC<BreachCardProps> = ({ breach }) => {
       Description: breach.description
     };
     
+    // Use Promise to ensure proper handling of async operations
     setTimeout(() => {
-      exportReport([reportData], 'individual', `breach-report-${breach.domain}`);
-      toast.success('Breach report has been generated and downloaded');
+      try {
+        exportReport([reportData], 'individual', `breach-report-${breach.domain}`);
+        toast.success('Breach report has been generated and downloaded');
+        
+        // If we're in development mode and the page needs a refresh
+        if (process.env.NODE_ENV === 'development' && window.refreshApp) {
+          setTimeout(() => {
+            toast.info('Refreshing page data...');
+          }, 500);
+        }
+      } catch (error) {
+        toast.error('Failed to generate report');
+        console.error('Export error:', error);
+      }
     }, 500);
   };
 
@@ -129,7 +142,6 @@ const BreachCard: React.FC<BreachCardProps> = ({ breach }) => {
         
         <p className="text-sm text-muted-foreground">{breach.description}</p>
         
-        {/* Add Export Report button */}
         <Button
           variant="outline"
           size="sm"
