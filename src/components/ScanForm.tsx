@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
@@ -22,7 +21,7 @@ import {
 import { toast } from 'sonner';
 import { Mail, Phone, User, CreditCard, Building, AlertTriangle, Network, BadgeAlert } from 'lucide-react';
 
-type ScanType = 'email' | 'phone' | 'username' | 'creditCard' | 'bankAccount' | 'idNumber' | 'ipAddress' | 'physicalAddress';
+type ScanType = 'email' | 'phone' | 'username' | 'creditCard' | 'bankAccount' | 'idNumber' | 'ipAddress' | 'physicalAddress' | 'password';
 
 // Data validation patterns
 const VALIDATION_PATTERNS = {
@@ -33,7 +32,8 @@ const VALIDATION_PATTERNS = {
   bankAccount: /^\d{6}$/,
   idNumber: /^\d{4}$/,
   ipAddress: /^(\d{1,3}\.){3}\d{1,3}$/,
-  physicalAddress: /.{5,}/
+  physicalAddress: /.{5,}/,
+  password: /.{1,}/
 };
 
 // Breach database simulation for more accurate results
@@ -45,7 +45,8 @@ const BREACH_SAMPLES = {
   bankAccount: ['123456', '789012', '345678'],
   idNumber: ['1234', '5678', '9012'],
   ipAddress: ['192.168.1.1', '10.0.0.1', '172.16.0.1'],
-  physicalAddress: ['123 Main St', '456 Oak Avenue', '789 Pine Boulevard']
+  physicalAddress: ['123 Main St', '456 Oak Avenue', '789 Pine Boulevard'],
+  password: ['password', '123456', 'qwerty', 'admin']
 };
 
 const ScanForm = () => {
@@ -62,17 +63,14 @@ const ScanForm = () => {
     return pattern.test(value);
   };
 
-  // Enhanced breach check simulation
   const simulateBreachCheck = (type: ScanType, value: string): {
     breached: boolean,
     confidence: number,
     breachCount?: number,
     sources?: string[]
   } => {
-    // For demo purposes only - in production this would connect to real breach databases
     const samples = BREACH_SAMPLES[type] || [];
     
-    // Exact match
     if (samples.includes(value)) {
       return {
         breached: true,
@@ -82,9 +80,7 @@ const ScanForm = () => {
       };
     }
     
-    // Fuzzy match for some types
     if (['email', 'username', 'physicalAddress'].includes(type)) {
-      // Check for partial matches
       for (const sample of samples) {
         if (
           sample.includes(value) || 
@@ -101,7 +97,6 @@ const ScanForm = () => {
       }
     }
     
-    // Special check for risky input patterns
     if (
       (type === 'password' && value.length < 8) ||
       (type === 'username' && ['admin', 'root', 'user'].includes(value))
@@ -114,7 +109,6 @@ const ScanForm = () => {
       };
     }
     
-    // Random breach for testing - 10% chance
     if (Math.random() < 0.1) {
       return {
         breached: true,
@@ -124,7 +118,6 @@ const ScanForm = () => {
       };
     }
     
-    // Not found in breach database
     return {
       breached: false,
       confidence: 95
@@ -147,12 +140,10 @@ const ScanForm = () => {
       return;
     }
     
-    // Simulate advanced scanning process
     setIsScanning(true);
     setScanProgress(0);
     toast.info(`Starting scan for ${scanType}...`, { id: 'scan-progress' });
     
-    // Multi-phase scanning simulation for more realistic feel
     const scanPhases = [
       { progress: 15, message: 'Initializing secure scanning environment...' },
       { progress: 30, message: 'Searching public breach databases...' },
@@ -179,7 +170,6 @@ const ScanForm = () => {
     const finalizeScan = () => {
       setIsScanning(false);
       
-      // Use our enhanced breach simulation
       const result = simulateBreachCheck(scanType, inputValue);
       
       if (result.breached) {
@@ -235,6 +225,8 @@ const ScanForm = () => {
         return <Network className="h-5 w-5" />;
       case 'physicalAddress':
         return <Building className="h-5 w-5" />;
+      case 'password':
+        return <AlertTriangle className="h-5 w-5" />;
       default:
         return <AlertTriangle className="h-5 w-5" />;
     }
@@ -258,6 +250,8 @@ const ScanForm = () => {
         return 'Enter an IP address (e.g., 192.168.1.1)';
       case 'physicalAddress':
         return 'Enter your street address';
+      case 'password':
+        return 'Enter your password';
     }
   };
 
@@ -271,6 +265,8 @@ const ScanForm = () => {
       case 'bankAccount':
       case 'idNumber':
         return 'number';
+      case 'password':
+        return 'password';
       default:
         return 'text';
     }
@@ -309,6 +305,7 @@ const ScanForm = () => {
                   <SelectItem value="idNumber">ID Number (last 4 digits)</SelectItem>
                   <SelectItem value="ipAddress">IP Address</SelectItem>
                   <SelectItem value="physicalAddress">Physical Address</SelectItem>
+                  <SelectItem value="password">Password</SelectItem>
                 </SelectContent>
               </Select>
             </div>
