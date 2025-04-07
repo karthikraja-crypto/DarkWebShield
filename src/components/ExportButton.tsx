@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { FileText, Download } from 'lucide-react';
-import { exportReport, exportOverallReport } from '@/utils/exportUtils';
+import { exportReport, exportOverallReport, ExportFormat } from '@/utils/exportUtils';
 import { toast } from 'sonner';
 import {
   DropdownMenu,
@@ -30,7 +30,7 @@ const ExportButton = ({
 }: ExportButtonProps) => {
   const [isExporting, setIsExporting] = useState(false);
 
-  const handleExport = async (format: 'csv' | 'pdf' | 'individual', isOverallReport: boolean = false) => {
+  const handleExport = async (format: ExportFormat, isOverallReport: boolean = false) => {
     try {
       setIsExporting(true);
       

@@ -1,161 +1,363 @@
-import React, { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { FileText, Download } from 'lucide-react';
-import { exportReport, exportOverallReport } from '@/utils/exportUtils';
-import { toast } from 'sonner';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 
-interface ExportButtonProps {
-  data: any[];
-  recommendationsData?: any[];
-  historyData?: any[];
-  className?: string;
-  variant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link';
-  showOverallReport?: boolean;
+// Export functions for different report formats
+export type ExportFormat = 'csv' | 'pdf' | 'individual';
+
+interface ExportOptions {
+  reportType?: 'standard' | 'detailed';
+  includeUserInfo?: boolean;
+  includeSummary?: boolean;
 }
 
-const ExportButton = ({ 
-  data, 
-  recommendationsData = [], 
-  historyData = [],
-  className, 
-  variant = 'default',
-  showOverallReport = false
-}: ExportButtonProps) => {
-  const [isExporting, setIsExporting] = useState(false);
-
-  const handleExport = async (format: 'csv' | 'pdf' | 'individual', isOverallReport: boolean = false) => {
-    try {
-      setIsExporting(true);
-      
-      // Simulate some processing time 
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      if (format === 'individual' && data.length > 0) {
-        // Export individual breach report using the unified exportReport function
-        exportReport([data[0]], format, `darkwebshield-breach-report-${Date.now()}`);
-        toast.success('Individual breach report exported successfully');
-      } else if (isOverallReport) {
-        // Get user info from localStorage
-        let userData = null;
-        try {
-          const storedUser = localStorage.getItem('user');
-          if (storedUser) {
-            userData = JSON.parse(storedUser);
-          }
-        } catch (e) {
-          console.error('Failed to parse user data:', e);
-        }
-        
-        // Process data for export - convert objects to structured format
-        const processedData = data.map(item => ({
-          Title: item.title || item.domain || 'Unknown',
-          Domain: item.domain || 'Unknown',
-          Date: item.breachDate ? new Date(item.breachDate).toLocaleDateString() : 'Unknown',
-          Risk: (item.riskLevel || 'medium').toUpperCase(),
-          AffectedData: Array.isArray(item.affectedData) ? item.affectedData.join(', ') : (item.affectedData || 'Unknown'),
-          Description: item.description || 'No detailed information available'
-        }));
-        
-        // Process recommendations data
-        const processedRecommendations = recommendationsData.map(rec => ({
-          Title: rec.title || 'Unknown',
-          Priority: rec.priority || 'medium',
-          Status: rec.completed ? 'Completed' : 'Pending',
-          Description: rec.description || ''
-        }));
-        
-        // Export comprehensive report with processed data
-        exportOverallReport(
-          processedData, 
-          processedRecommendations, 
-          historyData, 
-          `darkwebshield-overall-report-${Date.now()}`
-        );
-        toast.success('Comprehensive security report exported successfully');
-      } else {
-        // Process data for standard export
-        const processedData = data.map(item => {
-          // Convert any complex object structures to a flat format for export
-          const flatItem: Record<string, any> = {};
-          Object.entries(item).forEach(([key, value]) => {
-            if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
-              Object.entries(value).forEach(([subKey, subValue]) => {
-                flatItem[`${key}_${subKey}`] = subValue;
-              });
-            } else if (Array.isArray(value)) {
-              flatItem[key] = value.join(', ');
-            } else {
-              flatItem[key] = value;
-            }
-          });
-          return flatItem;
-        });
-        
-        // Export regular report with processed data
-        exportReport(processedData, format, `darkwebshield-report-${Date.now()}`, {
-          reportType: 'standard'
-        });
-        toast.success(`Report exported successfully as ${format.toUpperCase()}`);
-      }
-    } catch (error) {
-      console.error('Export error:', error);
-      toast.error('Failed to export report');
-    } finally {
-      setIsExporting(false);
+/**
+ * Export data as a formatted report
+ */
+export const exportReport = (
+  data: any[], 
+  format: ExportFormat, 
+  filename: string, 
+  options: ExportOptions = {}
+) => {
+  console.log(`Exporting ${data.length} records as ${format} file: ${filename}`);
+  
+  // Get user info from localStorage for the report header
+  let userData = null;
+  try {
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      userData = JSON.parse(storedUser);
     }
-  };
+  } catch (e) {
+    console.error('Failed to parse user data:', e);
+  }
 
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button 
-          variant={variant} 
-          className={className}
-          disabled={isExporting || !data.length}
-        >
-          {isExporting ? (
-            <>
-              <FileText className="mr-2 h-4 w-4 animate-pulse" />
-              Exporting...
-            </>
-          ) : (
-            <>
-              <FileText className="mr-2 h-4 w-4" />
-              {showOverallReport ? 'Overall Report' : 'Export Report'}
-            </>
-          )}
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent>
-        {showOverallReport && (
-          <DropdownMenuItem onClick={() => handleExport('pdf', true)}>
-            <Download className="mr-2 h-4 w-4" />
-            Export Overall Report
-          </DropdownMenuItem>
-        )}
-        {data.length === 1 && (
-          <DropdownMenuItem onClick={() => handleExport('individual')}>
-            <Download className="mr-2 h-4 w-4" />
-            Individual Breach Report
-          </DropdownMenuItem>
-        )}
-        <DropdownMenuItem onClick={() => handleExport('csv')}>
-          <Download className="mr-2 h-4 w-4" />
-          Export as CSV
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => handleExport('pdf')}>
-          <Download className="mr-2 h-4 w-4" />
-          Export as PDF
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+  const reportId = `DWS-${Date.now().toString(36).toUpperCase()}`;
+  
+  switch (format) {
+    case 'csv':
+      // Export as CSV logic
+      downloadCSV(data, filename);
+      break;
+    
+    case 'pdf':
+      // Export as PDF logic
+      generatePDF(data, filename, options, userData, reportId);
+      break;
+    
+    case 'individual':
+      // Export individual breach report
+      if (data.length > 0) {
+        generateIndividualBreachReport(data[0], filename, userData, reportId);
+      }
+      break;
+      
+    default:
+      console.error(`Unsupported export format: ${format}`);
+  }
+};
+
+/**
+ * Export comprehensive security report with all data
+ */
+export const exportOverallReport = (
+  breachData: any[], 
+  recommendationsData: any[], 
+  historyData: any[],
+  filename: string
+) => {
+  console.log('Generating overall security report with comprehensive data');
+  
+  // Get user info from localStorage
+  let userData = null;
+  try {
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      userData = JSON.parse(storedUser);
+    }
+  } catch (e) {
+    console.error('Failed to parse user data:', e);
+  }
+
+  const reportId = `DWS-FULL-${Date.now().toString(36).toUpperCase()}`;
+  
+  // Generate the PDF with formatted sections
+  generateComprehensivePDF(
+    breachData, 
+    recommendationsData, 
+    historyData, 
+    filename, 
+    userData,
+    reportId
   );
 };
 
-export default ExportButton;
+// Helper functions for the export process
+
+function downloadCSV(data: any[], filename: string) {
+  try {
+    // Convert data to CSV format
+    const replacer = (key: string, value: any) => value === null ? '' : value;
+    const header = Object.keys(data[0] || {});
+    const csv = [
+      header.join(','),
+      ...data.map(row => header.map(fieldName => 
+        JSON.stringify(row[fieldName], replacer)).join(','))
+    ].join('\r\n');
+
+    // Create download link
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.setAttribute('hidden', '');
+    a.setAttribute('href', url);
+    a.setAttribute('download', `${filename}.csv`);
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  } catch (error) {
+    console.error('Error generating CSV:', error);
+  }
+}
+
+function generatePDF(
+  data: any[], 
+  filename: string, 
+  options: ExportOptions,
+  userData: any,
+  reportId: string
+) {
+  // Simulate PDF generation for now
+  console.log(`Generating PDF with ${data.length} records`);
+  console.log(`Title: DarkWebShield – Breach Summary Report`);
+  console.log(`Report ID: ${reportId}`);
+  console.log(`User: ${userData?.name || 'Unknown User'}`);
+  console.log(`Date: ${new Date().toLocaleDateString()}`);
+  
+  // In a real scenario, we would use a library like pdfmake or jspdf
+  // to generate a proper PDF with sections as specified
+  
+  // Simulate download
+  setTimeout(() => {
+    const a = document.createElement('a');
+    // This is a placeholder. In a real implementation, we would create 
+    // an actual PDF and use its URL here
+    a.href = 'data:application/pdf;base64,JVBERi0xLjcKJeLjz9MKNSAwIG9iago...';
+    a.download = `${filename}.pdf`;
+    a.click();
+  }, 100);
+}
+
+function generateIndividualBreachReport(
+  breach: any,
+  filename: string,
+  userData: any,
+  reportId: string
+) {
+  console.log('Generating Individual Breach Report');
+  console.log('Title: 🔐 DarkWebShield – Individual Breach Report');
+  console.log(`User: ${userData?.name || 'Unknown User'}`);
+  console.log(`Report ID: ${reportId}`);
+  console.log(`Breach ID: ${breach.id || 'Unknown'}`);
+  
+  // Format for individual breach report following the specified structure
+  const reportContent = `
+🔐 DarkWebShield – Individual Breach Report
+User: ${userData?.name || 'Unknown User'}
+Email: ${userData?.email || 'Unknown Email'}
+Report ID: ${reportId}
+Breach ID: ${breach.id || 'Unknown'}
+Generated On: ${new Date().toLocaleString()}
+
+🔹 Breach Details
+Breach Source: ${breach.domain || breach.title || 'Unknown Source'}
+Breach Date: Leaked on ${new Date(breach.breachDate).toLocaleDateString() || 'Unknown Date'}
+Data Exposed: ${Array.isArray(breach.affectedData) ? breach.affectedData.join(', ') : 'Unknown'}
+Password Status: ${breach.passwordStatus || 'Unknown'}
+Risk Level: ${(breach.riskLevel || 'Medium').toUpperCase()}
+Leak Type: ${breach.leakType || 'Unknown'}
+Exposed Email: ${userData?.email || 'Unknown Email'}
+${breach.associatedIP ? `Associated IP: ${breach.associatedIP}` : ''}
+
+🔍 Threat Impact
+${getImpactText(breach.riskLevel)}
+
+✅ Recommended Actions
+${getRecommendedActions(breach)}
+
+🔁 Ongoing Monitoring
+This breach will remain under active surveillance
+You'll be notified if it's found in new dark web dumps
+  `;
+  
+  console.log(reportContent);
+  
+  // Simulate download
+  // In a real scenario, this would create a properly formatted PDF
+  setTimeout(() => {
+    const blob = new Blob([reportContent], {type: 'text/plain'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${filename}.txt`;
+    a.click();
+  }, 100);
+}
+
+function generateComprehensivePDF(
+  breachData: any[],
+  recommendationsData: any[],
+  historyData: any[],
+  filename: string,
+  userData: any,
+  reportId: string
+) {
+  console.log('Generating Comprehensive Security Report');
+  console.log('Title: DarkWebShield – Breach Summary Report');
+  
+  // Create report sections
+  const executiveSummary = `
+Executive Summary
+----------------
+Total Breaches: ${breachData.length}
+Scan Count: ${historyData.length}
+Risk Level: ${calculateOverallRisk(breachData)}
+  `;
+  
+  // Create scan history table
+  const scanHistoryTable = `
+Scan History
+-----------
+${historyData.map(scan => 
+  `Date: ${new Date(scan.date).toLocaleDateString()} | Type: ${scan.type} | Breaches Found: ${scan.breachesFound}`
+).join('\n')}
+  `;
+  
+  // Create detailed breach data
+  const detailedBreachData = `
+Detailed Breach Data
+------------------
+${breachData.map(breach => 
+  `Site: ${breach.Title || breach.Domain || 'Unknown'}
+  Date: ${breach.Date || 'Unknown'}
+  Exposed Data: ${breach.AffectedData || 'Unknown'}
+  Risk Level: ${breach.Risk || 'UNKNOWN'}
+  Recommendations: ${getBreachRecommendations(breach)}
+  `
+).join('\n\n')}
+  `;
+  
+  // Create security tips
+  const securityTips = `
+Security Tips & Monitoring Summary
+--------------------------------
+1. Use unique passwords for all accounts
+2. Enable two-factor authentication wherever possible
+3. Regularly monitor your accounts for suspicious activity
+4. Consider using a password manager
+5. Be cautious of phishing attempts
+
+Your account is being actively monitored for new breaches. You will be notified immediately if your data appears in any new leaks.
+  `;
+  
+  // Full report content
+  const reportContent = `
+DarkWebShield – Breach Summary Report
+===================================
+User Name: ${userData?.name || 'Unknown User'}
+Email: ${userData?.email || 'Unknown Email'}
+Date: ${new Date().toLocaleString()}
+Report ID: ${reportId}
+
+${executiveSummary}
+
+${scanHistoryTable}
+
+${detailedBreachData}
+
+${securityTips}
+  `;
+  
+  console.log(reportContent);
+  
+  // Simulate download
+  // In a real scenario, this would create a properly formatted PDF
+  setTimeout(() => {
+    const blob = new Blob([reportContent], {type: 'text/plain'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${filename}.txt`;
+    a.click();
+  }, 100);
+}
+
+// Helper functions
+
+function calculateOverallRisk(breachData: any[]): string {
+  if (!breachData.length) return 'LOW';
+  
+  // Count risk levels
+  const riskCounts = {
+    high: 0,
+    medium: 0,
+    low: 0
+  };
+  
+  breachData.forEach(breach => {
+    const risk = (breach.Risk || breach.riskLevel || '').toLowerCase();
+    if (risk === 'high') riskCounts.high++;
+    else if (risk === 'medium') riskCounts.medium++;
+    else riskCounts.low++;
+  });
+  
+  // Determine overall risk
+  if (riskCounts.high > 0) return 'HIGH';
+  if (riskCounts.medium > 0) return 'MEDIUM';
+  return 'LOW';
+}
+
+function getImpactText(riskLevel: string): string {
+  const risk = (riskLevel || 'medium').toLowerCase();
+  
+  if (risk === 'high') {
+    return `Your account is at high risk of unauthorized access
+    
+This data may be used in:
+- Credential stuffing attacks
+- Spam/phishing campaigns
+- Impersonation attempts`;
+  } else if (risk === 'medium') {
+    return `Your account may be vulnerable to targeted attacks
+    
+This data could potentially be used for:
+- Personalized phishing attempts
+- Account takeover if password is weak`;
+  } else {
+    return `Your account exposure is limited
+    
+While the risk is low, be aware of:
+- Potential spam to exposed email addresses
+- Correlation with other exposed data`;
+  }
+}
+
+function getRecommendedActions(breach: any): string {
+  const site = breach.domain || breach.title || 'affected sites';
+  
+  return `- Change the password immediately on ${site}
+- Update similar passwords used on other services
+- Enable 2FA on all critical accounts
+- Monitor financial transactions for fraud
+- Avoid using real data on unsecured sites`;
+}
+
+function getBreachRecommendations(breach: any): string {
+  const risk = (breach.Risk || 'medium').toLowerCase();
+  
+  if (risk === 'high') {
+    return 'Immediate password change, enable 2FA, monitor accounts';
+  } else if (risk === 'medium') {
+    return 'Update passwords, review account security';
+  } else {
+    return 'Monitor account for unusual activity';
+  }
+}
