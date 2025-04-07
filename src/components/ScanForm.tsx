@@ -20,42 +20,202 @@ import {
   SelectValue 
 } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { Mail, Phone, User, CreditCard, Building, AlertTriangle } from 'lucide-react';
+import { Mail, Phone, User, CreditCard, Building, AlertTriangle, Network, BadgeAlert } from 'lucide-react';
 
 type ScanType = 'email' | 'phone' | 'username' | 'creditCard' | 'bankAccount' | 'idNumber' | 'ipAddress' | 'physicalAddress';
+
+// Data validation patterns
+const VALIDATION_PATTERNS = {
+  email: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+  phone: /^\d{10}$|^\d{3}-\d{3}-\d{4}$/,
+  username: /^[a-zA-Z0-9_]{3,20}$/,
+  creditCard: /^\d{4}$/,
+  bankAccount: /^\d{6}$/,
+  idNumber: /^\d{4}$/,
+  ipAddress: /^(\d{1,3}\.){3}\d{1,3}$/,
+  physicalAddress: /.{5,}/
+};
+
+// Breach database simulation for more accurate results
+const BREACH_SAMPLES = {
+  email: ['test@example.com', 'admin@company.com', 'john.doe@gmail.com', 'info@business.org'],
+  phone: ['1234567890', '555-123-4567', '8885551234'],
+  username: ['admin', 'user1234', 'johndoe', 'testuser'],
+  creditCard: ['1234', '5678', '9012', '3456'],
+  bankAccount: ['123456', '789012', '345678'],
+  idNumber: ['1234', '5678', '9012'],
+  ipAddress: ['192.168.1.1', '10.0.0.1', '172.16.0.1'],
+  physicalAddress: ['123 Main St', '456 Oak Avenue', '789 Pine Boulevard']
+};
 
 const ScanForm = () => {
   const navigate = useNavigate();
   const [scanType, setScanType] = useState<ScanType>('email');
   const [inputValue, setInputValue] = useState('');
   const [isScanning, setIsScanning] = useState(false);
+  const [scanProgress, setScanProgress] = useState(0);
+  const [validationError, setValidationError] = useState('');
+
+  const validateInput = (type: ScanType, value: string): boolean => {
+    const pattern = VALIDATION_PATTERNS[type];
+    if (!pattern) return true;
+    return pattern.test(value);
+  };
+
+  // Enhanced breach check simulation
+  const simulateBreachCheck = (type: ScanType, value: string): {
+    breached: boolean,
+    confidence: number,
+    breachCount?: number,
+    sources?: string[]
+  } => {
+    // For demo purposes only - in production this would connect to real breach databases
+    const samples = BREACH_SAMPLES[type] || [];
+    
+    // Exact match
+    if (samples.includes(value)) {
+      return {
+        breached: true,
+        confidence: 100,
+        breachCount: Math.floor(Math.random() * 5) + 1,
+        sources: ['Dark Web Marketplace', 'Hacker Forum', 'Data Dump'].slice(0, Math.floor(Math.random() * 3) + 1)
+      };
+    }
+    
+    // Fuzzy match for some types
+    if (['email', 'username', 'physicalAddress'].includes(type)) {
+      // Check for partial matches
+      for (const sample of samples) {
+        if (
+          sample.includes(value) || 
+          value.includes(sample) || 
+          type === 'email' && value.split('@')[0] === sample.split('@')[0]
+        ) {
+          return {
+            breached: true,
+            confidence: 75,
+            breachCount: Math.floor(Math.random() * 3) + 1,
+            sources: ['Suspected Data Breach', 'Uncertain Source']
+          };
+        }
+      }
+    }
+    
+    // Special check for risky input patterns
+    if (
+      (type === 'password' && value.length < 8) ||
+      (type === 'username' && ['admin', 'root', 'user'].includes(value))
+    ) {
+      return {
+        breached: true,
+        confidence: 85,
+        breachCount: Math.floor(Math.random() * 5) + 1,
+        sources: ['Multiple Sources', 'Common Target']
+      };
+    }
+    
+    // Random breach for testing - 10% chance
+    if (Math.random() < 0.1) {
+      return {
+        breached: true,
+        confidence: 60,
+        breachCount: 1,
+        sources: ['Unverified Source']
+      };
+    }
+    
+    // Not found in breach database
+    return {
+      breached: false,
+      confidence: 95
+    };
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setValidationError('');
     
     if (!inputValue.trim()) {
       toast.error('Please enter a value to scan');
+      setValidationError('This field is required');
       return;
     }
     
-    // Simulate scanning process
-    setIsScanning(true);
-    toast.info('Starting dark web scan...');
+    if (!validateInput(scanType, inputValue)) {
+      toast.error(`Invalid format for ${scanType}`);
+      setValidationError(`Please enter a valid ${scanType} format`);
+      return;
+    }
     
-    // Simulate API call delay
-    setTimeout(() => {
+    // Simulate advanced scanning process
+    setIsScanning(true);
+    setScanProgress(0);
+    toast.info(`Starting scan for ${scanType}...`, { id: 'scan-progress' });
+    
+    // Multi-phase scanning simulation for more realistic feel
+    const scanPhases = [
+      { progress: 15, message: 'Initializing secure scanning environment...' },
+      { progress: 30, message: 'Searching public breach databases...' },
+      { progress: 45, message: 'Scanning dark web forums...' },
+      { progress: 60, message: 'Searching encrypted marketplaces...' },
+      { progress: 75, message: 'Cross-referencing with known breaches...' },
+      { progress: 90, message: 'Analyzing results and creating report...' },
+      { progress: 100, message: 'Scan complete! Preparing results...' }
+    ];
+    
+    let phaseIndex = 0;
+    const runNextPhase = () => {
+      if (phaseIndex < scanPhases.length) {
+        const phase = scanPhases[phaseIndex];
+        setScanProgress(phase.progress);
+        toast.info(phase.message, { id: 'scan-progress' });
+        phaseIndex++;
+        setTimeout(runNextPhase, 600 + Math.random() * 400);
+      } else {
+        finalizeScan();
+      }
+    };
+    
+    const finalizeScan = () => {
       setIsScanning(false);
-      toast.success('Scan completed successfully');
       
-      // Navigate to results page with the input data
-      navigate('/results', { 
-        state: { 
-          scanType,
-          inputValue,
-          timestamp: new Date().toISOString()
-        }
-      });
-    }, 3000);
+      // Use our enhanced breach simulation
+      const result = simulateBreachCheck(scanType, inputValue);
+      
+      if (result.breached) {
+        toast.error(`Alert: Your ${scanType} was found in ${result.breachCount} data breaches`, {
+          duration: 5000
+        });
+        
+        navigate('/results', { 
+          state: { 
+            scanType,
+            inputValue: scanType === 'creditCard' ? '****' + inputValue : inputValue,
+            breachDetected: true,
+            confidence: result.confidence,
+            breachCount: result.breachCount,
+            breachSources: result.sources,
+            riskLevel: result.confidence > 80 ? 'high' : 'medium',
+            timestamp: new Date().toISOString()
+          }
+        });
+      } else {
+        toast.success(`Good news! Your ${scanType} was not found in any breaches.`);
+        
+        navigate('/results', { 
+          state: { 
+            scanType,
+            inputValue: scanType === 'creditCard' ? '****' + inputValue : inputValue,
+            breachDetected: false,
+            confidence: result.confidence,
+            riskLevel: 'low',
+            timestamp: new Date().toISOString()
+          }
+        });
+      }
+    };
+    
+    runNextPhase();
   };
 
   const renderIcon = () => {
@@ -69,6 +229,10 @@ const ScanForm = () => {
       case 'creditCard':
       case 'bankAccount':
         return <CreditCard className="h-5 w-5" />;
+      case 'idNumber':
+        return <BadgeAlert className="h-5 w-5" />;  
+      case 'ipAddress':
+        return <Network className="h-5 w-5" />;
       case 'physicalAddress':
         return <Building className="h-5 w-5" />;
       default:
@@ -81,7 +245,7 @@ const ScanForm = () => {
       case 'email':
         return 'Enter your email address';
       case 'phone':
-        return 'Enter your phone number';
+        return 'Enter your phone number (e.g., 555-123-4567)';
       case 'username':
         return 'Enter your username';
       case 'creditCard':
@@ -94,6 +258,21 @@ const ScanForm = () => {
         return 'Enter an IP address (e.g., 192.168.1.1)';
       case 'physicalAddress':
         return 'Enter your street address';
+    }
+  };
+
+  const getInputType = () => {
+    switch (scanType) {
+      case 'email':
+        return 'email';
+      case 'phone':
+        return 'tel';
+      case 'creditCard':
+      case 'bankAccount':
+      case 'idNumber':
+        return 'number';
+      default:
+        return 'text';
     }
   };
 
@@ -112,7 +291,11 @@ const ScanForm = () => {
               <Label htmlFor="scanType">Information Type</Label>
               <Select 
                 value={scanType} 
-                onValueChange={(value) => setScanType(value as ScanType)}
+                onValueChange={(value) => {
+                  setScanType(value as ScanType);
+                  setInputValue(''); // Reset value when type changes
+                  setValidationError('');
+                }}
               >
                 <SelectTrigger className="cyber-input">
                   <SelectValue placeholder="Select what to scan" />
@@ -138,15 +321,24 @@ const ScanForm = () => {
                 </div>
                 <Input
                   id="inputValue"
-                  className="cyber-input pl-10"
+                  className={`cyber-input pl-10 ${validationError ? 'border-red-500' : ''}`}
+                  type={getInputType()}
                   value={inputValue}
-                  onChange={(e) => setInputValue(e.target.value)}
+                  onChange={(e) => {
+                    setInputValue(e.target.value);
+                    setValidationError('');
+                  }}
                   placeholder={getPlaceholder()}
+                  maxLength={scanType === 'bankAccount' ? 6 : (scanType === 'creditCard' || scanType === 'idNumber' ? 4 : undefined)}
                 />
               </div>
-              <p className="text-xs text-muted-foreground mt-1">
-                Your data is encrypted and secure. We never store sensitive information.
-              </p>
+              {validationError ? (
+                <p className="text-xs text-red-500 mt-1">{validationError}</p>
+              ) : (
+                <p className="text-xs text-muted-foreground mt-1">
+                  Your data is encrypted and secure. We never store sensitive information.
+                </p>
+              )}
             </div>
           </div>
           
@@ -158,9 +350,13 @@ const ScanForm = () => {
             {isScanning ? (
               <>
                 <span className="mr-2">Scanning</span>
-                <div className="h-4 w-16 bg-cyber-dark/20 overflow-hidden rounded-full">
-                  <div className="h-full w-1/2 bg-scan-line animate-scanning"></div>
+                <div className="relative h-4 w-36 bg-cyber-dark/20 overflow-hidden rounded-full">
+                  <div 
+                    className="h-full bg-scan-line animate-scanning" 
+                    style={{ width: `${scanProgress}%` }}
+                  />
                 </div>
+                <span className="ml-2">{scanProgress}%</span>
               </>
             ) : 'Start Scan'}
           </Button>

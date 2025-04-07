@@ -15,7 +15,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { ShieldAlert, AlertTriangle, Lock } from 'lucide-react';
+import { ShieldAlert, AlertTriangle, Lock, Loader2 } from 'lucide-react';
 
 type GovernmentIDType = 
   'aadhar' | 
@@ -25,24 +25,73 @@ type GovernmentIDType =
   'voterID' | 
   'ssn';
 
+// Common patterns for known ID formats
+const ID_PATTERNS = {
+  aadhar: /^\d{4}$/,
+  pan: /^[A-Z0-9]{4}$/,
+  passport: /^[A-Z0-9]{4}$/,
+  drivingLicense: /^[A-Z0-9]{4}$/,
+  voterID: /^[A-Z0-9]{4}$/,
+  ssn: /^\d{4}$/
+};
+
+// Known breach database simulation - in real app, this would be an API call
+const BREACH_DATABASE = {
+  aadhar: ['1234', '5678', '9012', '3456'],
+  pan: ['ABCD', 'EFGH', 'IJKL', 'MNOP'],
+  passport: ['A123', 'B456', 'C789', 'D012'],
+  drivingLicense: ['X123', 'Y456', 'Z789', 'W012'],
+  voterID: ['ID34', 'ID56', 'ID78', 'ID90'],
+  ssn: ['1234', '5678', '9012', '3456']
+};
+
 const GovernmentIDSection = () => {
   const navigate = useNavigate();
   const [idType, setIdType] = useState<GovernmentIDType>('passport');
   const [idValue, setIdValue] = useState('');
   const [isScanning, setIsScanning] = useState(false);
+  const [scanProgress, setScanProgress] = useState(0);
   const [isEncryptionConfirmed, setIsEncryptionConfirmed] = useState(false);
+  const [validationError, setValidationError] = useState('');
 
-  // Simulate ID encryption for security (in a real app, use proper encryption)
-  const secureEncrypt = (value: string): string => {
-    // This is a placeholder for actual encryption logic
-    return value.replace(/[0-9a-zA-Z]/g, '*') + "_encrypted";
+  // Advanced ID encryption for security
+  const secureEncrypt = (value: string, type: GovernmentIDType): string => {
+    // This is a simulated encryption - in production, use proper encryption libraries
+    const salt = `${type}-${new Date().getTime()}`;
+    const encrypted = value.split('').map(char => {
+      const code = char.charCodeAt(0);
+      return String.fromCharCode((code + 7) % 126);
+    }).join('');
+    
+    return `${encrypted}_${salt}_encrypted`;
+  };
+
+  const validateIdFormat = (value: string, type: GovernmentIDType): boolean => {
+    const pattern = ID_PATTERNS[type];
+    if (!pattern) return true; // If no pattern defined, allow any input
+    
+    return pattern.test(value);
+  };
+
+  const checkBreachDatabase = (value: string, type: GovernmentIDType): boolean => {
+    // Simulating database check - in production, this would be a secure API call
+    const breachList = BREACH_DATABASE[type] || [];
+    return breachList.includes(value);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setValidationError('');
     
     if (!idValue.trim()) {
       toast.error('Please enter an ID to scan');
+      setValidationError('ID value is required');
+      return;
+    }
+
+    if (!validateIdFormat(idValue, idType)) {
+      toast.error(`Invalid format for ${getIdTypeName(idType)}`);
+      setValidationError(`Please enter a valid ${getIdTypeName(idType)} format (${getIdPlaceholder(idType)})`);
       return;
     }
 
@@ -52,49 +101,84 @@ const GovernmentIDSection = () => {
     }
     
     // Encrypt ID before scanning
-    const encryptedValue = secureEncrypt(idValue);
+    const encryptedValue = secureEncrypt(idValue, idType);
     console.log('Encrypted ID:', encryptedValue); // Would be removed in production
     
-    // Simulate scanning process
+    // Simulate advanced scanning process
     setIsScanning(true);
+    setScanProgress(0);
     toast.info(`Starting secure scan for ${getIdTypeName(idType)}...`);
     
-    // Simulate API call delay
-    setTimeout(() => {
-      setIsScanning(false);
-      
-      // Simulate randomly finding breaches (30% chance for demo)
-      const breachFound = Math.random() < 0.3;
-      
-      if (breachFound) {
-        toast.error('Alert: Your ID may have been exposed in a data breach', {
-          duration: 5000
-        });
+    // Simulate multi-stage scanning process
+    const simulateScanStages = () => {
+      // Stage 1: Initial encryption check
+      setTimeout(() => {
+        setScanProgress(20);
+        toast.info('Verifying encryption integrity...', { id: 'scan-progress' });
         
-        // Navigate to results with breach info
-        navigate('/results', { 
-          state: { 
-            scanType: 'governmentID',
-            idType,
-            breachDetected: true,
-            riskLevel: 'high',
-            timestamp: new Date().toISOString()
-          }
-        });
-      } else {
-        toast.success('Scan completed. No breaches detected for your ID.');
-        
-        navigate('/results', { 
-          state: { 
-            scanType: 'governmentID',
-            idType,
-            breachDetected: false,
-            riskLevel: 'low',
-            timestamp: new Date().toISOString()
-          }
-        });
-      }
-    }, 3500);
+        // Stage 2: First database check
+        setTimeout(() => {
+          setScanProgress(40);
+          toast.info('Searching primary breach database...', { id: 'scan-progress' });
+          
+          // Stage 3: Deep web scan
+          setTimeout(() => {
+            setScanProgress(60);
+            toast.info('Scanning deep web forums...', { id: 'scan-progress' });
+            
+            // Stage 4: Dark web marketplace scan
+            setTimeout(() => {
+              setScanProgress(80);
+              toast.info('Analyzing dark web marketplaces...', { id: 'scan-progress' });
+              
+              // Final stage: Results compilation
+              setTimeout(() => {
+                setScanProgress(100);
+                setIsScanning(false);
+                
+                // Determine if breach found - now using our simulated database
+                const breachFound = checkBreachDatabase(idValue, idType);
+                
+                if (breachFound) {
+                  toast.error('Alert: Your ID may have been exposed in a data breach', {
+                    duration: 5000
+                  });
+                  
+                  // Navigate to results with detailed breach info
+                  navigate('/results', { 
+                    state: { 
+                      scanType: 'governmentID',
+                      idType,
+                      breachDetected: true,
+                      riskLevel: 'high',
+                      breachSource: 'Dark web marketplace',
+                      breachDate: new Date(Date.now() - 7776000000).toISOString(), // ~90 days ago
+                      affectedRecords: Math.floor(Math.random() * 100000) + 5000,
+                      timestamp: new Date().toISOString()
+                    }
+                  });
+                } else {
+                  toast.success('Scan completed. No breaches detected for your ID.');
+                  
+                  navigate('/results', { 
+                    state: { 
+                      scanType: 'governmentID',
+                      idType,
+                      breachDetected: false,
+                      riskLevel: 'low',
+                      lastScanDate: new Date().toISOString(),
+                      timestamp: new Date().toISOString()
+                    }
+                  });
+                }
+              }, 700);
+            }, 700);
+          }, 800);
+        }, 600);
+      }, 500);
+    };
+    
+    simulateScanStages();
   };
 
   const getIdTypeName = (type: GovernmentIDType): string => {
@@ -139,7 +223,11 @@ const GovernmentIDSection = () => {
               <Label htmlFor="idType">ID Type</Label>
               <Select 
                 value={idType} 
-                onValueChange={(value) => setIdType(value as GovernmentIDType)}
+                onValueChange={(value) => {
+                  setIdType(value as GovernmentIDType);
+                  setIdValue(''); // Reset value when type changes
+                  setValidationError('');
+                }}
               >
                 <SelectTrigger className="cyber-input">
                   <SelectValue placeholder="Select ID type" />
@@ -163,17 +251,23 @@ const GovernmentIDSection = () => {
                 </div>
                 <Input
                   id="idValue"
-                  className="cyber-input pl-10"
+                  className={`cyber-input pl-10 ${validationError ? 'border-red-500' : ''}`}
                   value={idValue}
-                  onChange={(e) => setIdValue(e.target.value)}
+                  onChange={(e) => {
+                    setIdValue(e.target.value);
+                    setValidationError('');
+                  }}
                   placeholder={getIdPlaceholder(idType)}
                   maxLength={4}
-                  pattern="[0-9]{4}"
                 />
               </div>
-              <p className="text-xs text-muted-foreground mt-1">
-                We only need the last 4 digits for secure scanning
-              </p>
+              {validationError ? (
+                <p className="text-xs text-red-500 mt-1">{validationError}</p>
+              ) : (
+                <p className="text-xs text-muted-foreground mt-1">
+                  We only need the last 4 digits for secure scanning
+                </p>
+              )}
             </div>
 
             <Alert className="bg-cyber-dark/40 border-cyber-primary/20">
@@ -203,9 +297,13 @@ const GovernmentIDSection = () => {
             {isScanning ? (
               <>
                 <span className="mr-2">Scanning</span>
-                <div className="h-4 w-16 bg-cyber-dark/20 overflow-hidden rounded-full">
-                  <div className="h-full w-1/2 bg-scan-line animate-scanning"></div>
+                <div className="relative h-4 w-36 bg-cyber-dark/20 overflow-hidden rounded-full">
+                  <div 
+                    className="h-full bg-scan-line animate-scanning" 
+                    style={{ width: `${scanProgress}%` }}
+                  />
                 </div>
+                <span className="ml-2">{scanProgress}%</span>
               </>
             ) : 'Start Secure ID Scan'}
           </Button>
