@@ -10,7 +10,7 @@ interface DataSourceIndicatorProps {
 }
 
 const DataSourceIndicator = ({ compact = false }: DataSourceIndicatorProps) => {
-  const { isRealData, toggleSampleMode } = useScan();
+  const { isRealData, setGlobalRealTimeScanMode } = useScan();
   
   if (compact) {
     return (
@@ -40,7 +40,7 @@ const DataSourceIndicator = ({ compact = false }: DataSourceIndicatorProps) => {
       <Button 
         variant="outline" 
         size="sm"
-        onClick={toggleSampleMode}
+        onClick={() => setGlobalRealTimeScanMode(!isRealData)}
       >
         {isRealData ? 'View Sample Data' : 'View Real Data'}
       </Button>

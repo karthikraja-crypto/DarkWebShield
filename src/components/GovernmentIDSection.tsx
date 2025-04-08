@@ -15,7 +15,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { ShieldAlert, AlertTriangle, Lock, Loader2 } from 'lucide-react';
+import { ShieldAlert, AlertTriangle, Lock, Loader2, AlertCircle } from 'lucide-react';
 import { useScan } from '@/contexts/ScanContext';
 import { BreachData } from '@/components/BreachCard';
 
