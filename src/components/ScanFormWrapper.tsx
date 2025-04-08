@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import ScanForm from '@/components/ScanForm';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle, Lock } from 'lucide-react';
@@ -18,9 +17,19 @@ const MOCK_BREACH_DATABASE = {
 };
 
 const ScanFormWrapper = () => {
-  const { addRealScan } = useScan();
+  const { addRealScan, setGlobalRealTimeScanMode, isRealTimeScanMode } = useScan();
   const navigate = useNavigate();
-  const [isRealTimeScan, setIsRealTimeScan] = useState(false);
+  const [isRealTimeScan, setIsRealTimeScan] = useState(isRealTimeScanMode);
+  
+  // Update global scan mode when local state changes
+  useEffect(() => {
+    setGlobalRealTimeScanMode(isRealTimeScan);
+  }, [isRealTimeScan, setGlobalRealTimeScanMode]);
+  
+  // Keep local state in sync with global state
+  useEffect(() => {
+    setIsRealTimeScan(isRealTimeScanMode);
+  }, [isRealTimeScanMode]);
   
   const handleScanSubmit = (type: string, value: string) => {
     if (isRealTimeScan) {
@@ -119,8 +128,8 @@ const ScanFormWrapper = () => {
         toast.success(successMessage);
       }
       
-      // Add the scan to our context
-      addRealScan(type, value, breaches);
+      // Add the scan to our context with proper flag for real vs sample data
+      addRealScan(type, value, breaches, isRealTimeScan);
       
       // Navigate to results
       navigate('/results');

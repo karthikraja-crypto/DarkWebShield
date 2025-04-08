@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -56,7 +57,7 @@ const GovernmentIDSection = () => {
   const [validationError, setValidationError] = useState('');
   
   // Get the scan context
-  const { addRealScan } = useScan();
+  const { addRealScan, isRealTimeScanMode } = useScan();
 
   // Advanced ID encryption for security
   const secureEncrypt = (value: string, type: GovernmentIDType): string => {
@@ -111,7 +112,12 @@ const GovernmentIDSection = () => {
     // Simulate advanced scanning process
     setIsScanning(true);
     setScanProgress(0);
-    toast.info(`Starting secure scan for ${getIdTypeName(idType)}...`);
+
+    const scanMessage = isRealTimeScanMode
+      ? `Starting real-time secure scan for ${getIdTypeName(idType)}...`
+      : `Starting secure scan for ${getIdTypeName(idType)}...`;
+      
+    toast.info(scanMessage);
     
     // Simulate multi-stage scanning process
     const simulateScanStages = () => {
@@ -164,12 +170,16 @@ const GovernmentIDSection = () => {
                   });
                   
                   // Add the real scan to our context
-                  addRealScan(idType, idValue, foundBreaches);
+                  addRealScan(idType, idValue, foundBreaches, isRealTimeScanMode);
                 } else {
-                  toast.success('Scan completed. No breaches detected for your ID.');
+                  const successMessage = isRealTimeScanMode
+                    ? '✅ No breaches found. You\'re safe!'
+                    : 'Scan completed. No breaches detected for your ID.';
+                    
+                  toast.success(successMessage);
                   
-                  // Add the real scan to our context (with empty breaches)
-                  addRealScan(idType, idValue, []);
+                  // Add the scan to our context (with empty breaches)
+                  addRealScan(idType, idValue, [], isRealTimeScanMode);
                 }
                 
                 // Navigate to results with detailed breach info
@@ -213,13 +223,22 @@ const GovernmentIDSection = () => {
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-cyber-primary">
           <ShieldAlert className="h-5 w-5" />
-          Government ID Protection
+          {isRealTimeScanMode ? 'Real-Time Government ID Protection' : 'Government ID Protection'}
         </CardTitle>
         <CardDescription>
           Securely check if your government IDs have been compromised in data breaches
         </CardDescription>
       </CardHeader>
       <CardContent>
+        {!isRealTimeScanMode && (
+          <Alert className="mb-4 bg-muted/30 border-muted">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription className="text-sm">
+              For demo purposes, try ID "1234" to see a breach result.
+            </AlertDescription>
+          </Alert>
+        )}
+      
         <form onSubmit={handleSubmit}>
           <div className="space-y-4">
             <div className="space-y-2">
@@ -308,7 +327,7 @@ const GovernmentIDSection = () => {
                 </div>
                 <span className="ml-2">{scanProgress}%</span>
               </>
-            ) : 'Start Secure ID Scan'}
+            ) : (isRealTimeScanMode ? 'Start Real-Time Secure ID Scan' : 'Start Secure ID Scan')}
           </Button>
         </form>
       </CardContent>

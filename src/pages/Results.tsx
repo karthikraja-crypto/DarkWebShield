@@ -12,7 +12,6 @@ import BreachCard from '@/components/BreachCard';
 import ScanResultExport from '@/components/ScanResultExport';
 import { exportOverallReport } from '@/utils/exportUtils';
 import { toast } from 'sonner';
-import DataSourceIndicator from '@/components/DataSourceIndicator';
 import { useScan } from '@/contexts/ScanContext';
 
 const Results = () => {
@@ -24,7 +23,8 @@ const Results = () => {
     scanHistory, 
     isRealData, 
     securityScore,
-    getLastScanDate 
+    getLastScanDate,
+    isRealTimeScanMode
   } = useScan();
 
   useEffect(() => {
@@ -38,16 +38,21 @@ const Results = () => {
 
   // Get the most recent scan from history
   const getLastScanType = () => {
-    return scanHistory.length > 0 ? scanHistory[0].type : 'Unknown';
-  };
-
-  const isRealTimeScan = () => {
-    // Check if the title of any breach contains "Real-Time"
-    return breaches.some(breach => breach.title.includes('Real-Time'));
+    if (scanHistory.length === 0) return 'Unknown';
+    
+    if (isRealTimeScanMode) {
+      // Get real scan type if available
+      const realScans = scanHistory.filter(scan => scan.isRealScan);
+      if (realScans.length > 0) {
+        return realScans[0].type;
+      }
+    }
+    
+    return scanHistory[0].type;
   };
 
   const handleGenerateOverallReport = () => {
-    const reportPrefix = isRealTimeScan() ? 'real-time-scan' : 'darkwebshield-scan';
+    const reportPrefix = isRealTimeScanMode ? 'real-time-scan' : 'darkwebshield-scan';
     toast.info('Generating comprehensive security report...');
     
     // Prepare the report data
@@ -68,8 +73,13 @@ const Results = () => {
       Description: rec.description
     }));
     
-    // Use scan history data
-    const scanHistoryData = scanHistory.map(scan => ({
+    // Use real scan history data if in real-time mode
+    const relevantScanHistory = isRealTimeScanMode 
+      ? scanHistory.filter(scan => scan.isRealScan)
+      : scanHistory;
+      
+    // Process scan history data
+    const scanHistoryData = relevantScanHistory.map(scan => ({
       date: scan.date,
       breachesFound: scan.breachesFound
     }));
@@ -114,13 +124,12 @@ const Results = () => {
           <div className="mb-8 flex justify-between items-center">
             <div>
               <h1 className="text-3xl font-bold mb-2 flex items-center">
-                {isRealTimeScan() ? 'Real-Time Scan Results' : 'Scan Results'}
-                <DataSourceIndicator compact />
+                {isRealTimeScanMode ? 'Real-Time Scan Results' : 'Scan Results'}
               </h1>
               <p className="text-muted-foreground">
-                {isRealTimeScan() 
+                {isRealTimeScanMode 
                   ? 'Real-time analysis of potential security threats and vulnerabilities'
-                  : 'Detailed analysis of potential security threats and vulnerabilities'
+                  : 'Analysis of potential security threats and vulnerabilities'
                 }
               </p>
             </div>
@@ -130,11 +139,9 @@ const Results = () => {
               onClick={handleGenerateOverallReport}
             >
               <FileText className="mr-2 h-4 w-4" />
-              {isRealTimeScan() ? 'Export Real-Time Report' : 'Overall Report'}
+              {isRealTimeScanMode ? 'Export Real-Time Report' : 'Export Report'}
             </Button>
           </div>
-          
-          <DataSourceIndicator />
           
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mt-6">
             {/* Left Column */}
@@ -153,7 +160,7 @@ const Results = () => {
                     <p>
                       <span className="font-semibold">Type:</span> {getLastScanType()}
                     </p>
-                    {isRealTimeScan() && (
+                    {isRealTimeScanMode && (
                       <p>
                         <span className="font-semibold">Scan Mode:</span> <span className="text-cyber-primary">Real-Time</span>
                       </p>
@@ -165,7 +172,7 @@ const Results = () => {
               {/* Breach Information */}
               <div className="space-y-4">
                 <h2 className="text-xl font-bold">
-                  {isRealTimeScan() ? 'Real-Time Breach Results' : 'Found Breaches'}
+                  {isRealTimeScanMode ? 'Real-Time Breach Results' : 'Found Breaches'}
                 </h2>
                 {breaches.length > 0 ? (
                   breaches.map((breach) => (
@@ -179,10 +186,10 @@ const Results = () => {
                     <div className="text-center py-6">
                       <CheckCircle2 className="h-12 w-12 text-green-500 mx-auto mb-4" />
                       <h3 className="text-xl font-medium mb-3">
-                        {isRealTimeScan() ? '✅ No breaches found. You\'re safe!' : 'No breaches found'}
+                        {isRealTimeScanMode ? '✅ No breaches found. You\'re safe!' : 'No breaches found'}
                       </h3>
                       <p className="text-muted-foreground mb-6 max-w-lg mx-auto">
-                        Good news! We didn't find your information in any known data breaches.
+                        Good news! {isRealTimeScanMode ? "We didn't find your information in any known data breaches." : "No breaches were found in this scan."} 
                         Continue to monitor your accounts regularly for best security practices.
                       </p>
                       

@@ -1,5 +1,4 @@
-
-import React, { createContext, useState, useContext, ReactNode } from 'react';
+import React, { createContext, useState, useContext, ReactNode, useCallback } from 'react';
 import { BreachData } from '@/components/BreachCard';
 import { Recommendation } from '@/components/RecommendationsList';
 
@@ -94,12 +93,14 @@ interface ScanContextType {
   recommendations: Recommendation[];
   scanHistory: ScanHistoryItem[];
   isRealData: boolean;
+  isRealTimeScanMode: boolean;
   securityScore: number;
-  addRealScan: (scanType: string, value: string, foundBreaches: BreachData[]) => void;
-  toggleSampleMode: () => void;
+  addRealScan: (scanType: string, value: string, foundBreaches: BreachData[], isRealScanRequest: boolean) => void;
+  setGlobalRealTimeScanMode: (isRealTime: boolean) => void;
   hasNewNotification: boolean;
   clearNotification: () => void;
   getLastScanDate: () => string;
+  useRealTimeScannedData: boolean;
 }
 
 // Create context
@@ -113,9 +114,37 @@ export const ScanProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [isRealData, setIsRealData] = useState<boolean>(false);
   const [securityScore, setSecurityScore] = useState<number>(75);
   const [hasNewNotification, setHasNewNotification] = useState<boolean>(false);
+  const [isRealTimeScanMode, setIsRealTimeScanMode] = useState<boolean>(false);
+  
+  // This state will control whether we show real scanned data or default to samples
+  const [useRealTimeScannedData, setUseRealTimeScannedData] = useState<boolean>(false);
+  
+  // Function to set the global real-time scan mode
+  const setGlobalRealTimeScanMode = useCallback((isRealTime: boolean) => {
+    setIsRealTimeScanMode(isRealTime);
+    
+    // When switching to sample mode, reset to sample data
+    if (!isRealTime) {
+      setBreaches(sampleBreaches);
+      setRecommendations(sampleRecommendations);
+      setIsRealData(false);
+      setSecurityScore(75);
+      setUseRealTimeScannedData(false);
+    } else {
+      // When switching to real-time mode, look for real scan data
+      const realScans = scanHistory.filter(scan => scan.isRealScan);
+      if (realScans.length > 0) {
+        // We have real scan data, show it
+        setUseRealTimeScannedData(true);
+      } else {
+        // No real scan data yet, keep sample data until first scan
+        setUseRealTimeScannedData(false);
+      }
+    }
+  }, [scanHistory]);
 
   // Function to add a new real scan
-  const addRealScan = (scanType: string, value: string, foundBreaches: BreachData[]) => {
+  const addRealScan = useCallback((scanType: string, value: string, foundBreaches: BreachData[], isRealScanRequest: boolean) => {
     // Format the value for privacy (e.g., j***@example.com)
     const maskedValue = maskSensitiveData(value, scanType);
     
@@ -126,16 +155,19 @@ export const ScanProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       type: scanType,
       value: maskedValue,
       breachesFound: foundBreaches.length,
-      isRealScan: true
+      isRealScan: isRealScanRequest
     };
     
-    // Update state
+    // Update scan history
     setScanHistory(prev => [newScanHistoryItem, ...prev]);
     
-    if (foundBreaches.length > 0) {
+    // Only update breach data & recommendations if we're in real-time mode
+    // or if it's a real scan and breaches were found
+    if (isRealScanRequest) {
       setBreaches(foundBreaches);
       setIsRealData(true);
       setHasNewNotification(true);
+      setUseRealTimeScannedData(true);
       
       // Calculate new security score based on breaches
       const newScore = calculateSecurityScore(foundBreaches);
@@ -145,37 +177,28 @@ export const ScanProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const newRecommendations = generateRecommendations(foundBreaches);
       setRecommendations(newRecommendations);
     }
-  };
-
-  // Toggle between sample and real data
-  const toggleSampleMode = () => {
-    if (isRealData) {
-      // Switch to sample data
-      setBreaches(sampleBreaches);
-      setRecommendations(sampleRecommendations);
-      setSecurityScore(75);
-    } else {
-      // Find the most recent real scan if any
-      const realScans = scanHistory.filter(scan => scan.isRealScan);
-      if (realScans.length > 0) {
-        // We have real scan data, show the most recent one
-        // In a real app, we'd fetch the associated breaches and recommendations
-        setIsRealData(true);
-      }
-    }
-    setIsRealData(!isRealData);
-  };
+  }, []);
 
   // Clear notification marker
-  const clearNotification = () => {
+  const clearNotification = useCallback(() => {
     setHasNewNotification(false);
-  };
+  }, []);
 
   // Get the last scan date
-  const getLastScanDate = (): string => {
+  const getLastScanDate = useCallback((): string => {
     if (scanHistory.length === 0) return '';
+    
+    if (isRealTimeScanMode) {
+      // In real-time mode, look for the most recent real scan
+      const realScans = scanHistory.filter(scan => scan.isRealScan);
+      if (realScans.length > 0) {
+        return realScans[0].date;
+      }
+    }
+    
+    // Otherwise return the most recent scan of any type
     return scanHistory[0].date;
-  };
+  }, [scanHistory, isRealTimeScanMode]);
 
   // Utility function to mask sensitive data
   const maskSensitiveData = (value: string, type: string): string => {
@@ -283,6 +306,24 @@ export const ScanProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       });
     }
     
+    // If no specific recommendations are generated, add a general one
+    if (recommendations.length === 0) {
+      recommendations.push({
+        id: `rec-${Date.now()}-4`,
+        title: 'Maintain Good Security Practices',
+        description: 'Follow these general security practices to stay protected.',
+        priority: 'medium',
+        icon: 'shield',
+        completed: false,
+        setupSteps: [
+          'Use strong, unique passwords for all accounts',
+          'Enable two-factor authentication where available',
+          'Keep your devices and software updated',
+          'Be cautious with emails and suspicious links'
+        ]
+      });
+    }
+    
     return recommendations;
   };
 
@@ -293,12 +334,14 @@ export const ScanProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         recommendations, 
         scanHistory, 
         isRealData, 
+        isRealTimeScanMode,
         securityScore,
         addRealScan, 
-        toggleSampleMode,
+        setGlobalRealTimeScanMode,
         hasNewNotification,
         clearNotification,
-        getLastScanDate
+        getLastScanDate,
+        useRealTimeScannedData
       }}
     >
       {children}

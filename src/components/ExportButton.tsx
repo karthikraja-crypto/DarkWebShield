@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { FileText, Download } from 'lucide-react';
 import { exportReport, exportOverallReport, ExportFormat } from '@/utils/exportUtils';
 import { toast } from 'sonner';
+import { useScan } from '@/contexts/ScanContext';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -29,6 +30,7 @@ const ExportButton = ({
   showOverallReport = false
 }: ExportButtonProps) => {
   const [isExporting, setIsExporting] = useState(false);
+  const { isRealTimeScanMode } = useScan();
 
   const handleExport = async (format: ExportFormat, isOverallReport: boolean = false) => {
     try {
@@ -39,7 +41,12 @@ const ExportButton = ({
       
       if (format === 'individual' && data.length > 0) {
         // Export individual breach report using the unified exportReport function
-        exportReport([data[0]], format, `darkwebshield-breach-report-${Date.now()}`);
+        const filename = isRealTimeScanMode 
+          ? `real-time-breach-report-${Date.now()}`
+          : `darkwebshield-breach-report-${Date.now()}`;
+          
+        exportReport([data[0]], format, filename);
+        
         toast.success('Individual breach report exported successfully');
       } else if (isOverallReport) {
         // Get user info from localStorage
@@ -71,12 +78,16 @@ const ExportButton = ({
           Description: rec.description || ''
         }));
         
+        const filename = isRealTimeScanMode 
+          ? `real-time-security-report-${Date.now()}` 
+          : `darkwebshield-overall-report-${Date.now()}`;
+          
         // Export comprehensive report with processed data
         exportOverallReport(
           processedData, 
           processedRecommendations, 
           historyData, 
-          `darkwebshield-overall-report-${Date.now()}`
+          filename
         );
         toast.success('Comprehensive security report exported successfully');
       } else {
@@ -98,8 +109,12 @@ const ExportButton = ({
           return flatItem;
         });
         
+        const filename = isRealTimeScanMode 
+          ? `real-time-report-${Date.now()}` 
+          : `darkwebshield-report-${Date.now()}`;
+          
         // Export regular report with processed data
-        exportReport(processedData, format, `darkwebshield-report-${Date.now()}`, {
+        exportReport(processedData, format, filename, {
           reportType: 'standard'
         });
         toast.success(`Report exported successfully as ${format.toUpperCase()}`);
@@ -128,7 +143,10 @@ const ExportButton = ({
           ) : (
             <>
               <FileText className="mr-2 h-4 w-4" />
-              {showOverallReport ? 'Overall Report' : 'Export Report'}
+              {isRealTimeScanMode 
+                ? (showOverallReport ? 'Real-Time Report' : 'Export Report') 
+                : (showOverallReport ? 'Overall Report' : 'Export Report')
+              }
             </>
           )}
         </Button>
@@ -137,13 +155,13 @@ const ExportButton = ({
         {showOverallReport && (
           <DropdownMenuItem onClick={() => handleExport('pdf', true)}>
             <Download className="mr-2 h-4 w-4" />
-            Export Overall Report
+            {isRealTimeScanMode ? 'Export Real-Time Overall Report' : 'Export Overall Report'}
           </DropdownMenuItem>
         )}
         {data.length === 1 && (
           <DropdownMenuItem onClick={() => handleExport('individual')}>
             <Download className="mr-2 h-4 w-4" />
-            Individual Breach Report
+            {isRealTimeScanMode ? 'Real-Time Breach Report' : 'Individual Breach Report'}
           </DropdownMenuItem>
         )}
         <DropdownMenuItem onClick={() => handleExport('csv')}>

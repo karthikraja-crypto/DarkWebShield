@@ -16,10 +16,9 @@ import {
 } from "@/components/ui/table";
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
-import DataSourceIndicator from '@/components/DataSourceIndicator';
 
 const Notifications = () => {
-  const { scanHistory, breaches, isRealData, clearNotification } = useScan();
+  const { scanHistory, breaches, isRealTimeScanMode, clearNotification } = useScan();
   const navigate = useNavigate();
   
   // Clear any new notification alerts when visiting this page
@@ -27,11 +26,13 @@ const Notifications = () => {
     clearNotification();
   }, [clearNotification]);
   
-  // Get real scan history only
-  const realScans = scanHistory.filter(scan => scan.isRealScan);
+  // Get scans based on mode
+  const relevantScans = isRealTimeScanMode
+    ? scanHistory.filter(scan => scan.isRealScan)
+    : scanHistory;
   
-  // Get scans with breaches
-  const scansWithBreaches = scanHistory.filter(scan => scan.breachesFound > 0);
+  // Get scans with breaches based on mode
+  const scansWithBreaches = relevantScans.filter(scan => scan.breachesFound > 0);
   
   return (
     <div className="min-h-screen flex flex-col">
@@ -43,14 +44,14 @@ const Notifications = () => {
             <div className="mb-8">
               <div className="flex items-center mb-3">
                 <Bell className="h-5 w-5 mr-2 text-cyber-primary" />
-                <h1 className="text-3xl font-bold">Notifications & Alerts</h1>
+                <h1 className="text-3xl font-bold">
+                  {isRealTimeScanMode ? 'Real-Time Notifications & Alerts' : 'Notifications & Alerts'}
+                </h1>
               </div>
               <p className="text-lg text-muted-foreground">
                 Stay informed about your digital security with personalized alerts
               </p>
             </div>
-            
-            <DataSourceIndicator />
             
             <div className="space-y-8 mt-6">
               {/* Recent Breach Alerts */}
@@ -71,7 +72,7 @@ const Notifications = () => {
                 <CardContent>
                   {scansWithBreaches.length > 0 ? (
                     <div className="space-y-4">
-                      {scansWithBreaches.slice(0, 5).map((scan, index) => (
+                      {scansWithBreaches.slice(0, 5).map((scan) => (
                         <div key={scan.id} className="flex items-start gap-3 pb-4 border-b border-muted last:border-0 last:pb-0">
                           <div className="bg-red-500/10 p-2 rounded-full">
                             <AlertCircle className="h-4 w-4 text-red-500" />
@@ -79,14 +80,14 @@ const Notifications = () => {
                           <div className="space-y-1 flex-1">
                             <div className="flex items-center justify-between">
                               <h3 className="font-medium">
-                                {scan.isRealScan ? 'Your' : 'Sample'} {scan.type} was found in {scan.breachesFound} {scan.breachesFound === 1 ? 'breach' : 'breaches'}
+                                {isRealTimeScanMode ? 'Your' : (scan.isRealScan ? 'Your' : 'Sample')} {scan.type} was found in {scan.breachesFound} {scan.breachesFound === 1 ? 'breach' : 'breaches'}
                               </h3>
                               <span className="text-xs text-muted-foreground">
                                 {new Date(scan.date).toLocaleDateString()}
                               </span>
                             </div>
                             <p className="text-sm text-muted-foreground">
-                              {scan.isRealScan
+                              {isRealTimeScanMode || scan.isRealScan
                                 ? `Your ${scan.type.toLowerCase()} "${scan.value}" appears to be compromised. Immediate action is recommended to secure your accounts.`
                                 : `This is a sample alert showing how a real breach notification would appear for ${scan.type.toLowerCase()} "${scan.value}".`
                               }
@@ -109,9 +110,9 @@ const Notifications = () => {
                       </div>
                       <h3 className="text-lg font-medium mb-1">No breach alerts</h3>
                       <p className="text-muted-foreground text-sm">
-                        {isRealData 
+                        {isRealTimeScanMode 
                           ? "No breaches detected for your data at this time. We'll keep monitoring for new threats." 
-                          : "You're viewing sample data. Run a real scan to check for actual breaches."
+                          : "You're viewing sample data. Run a scan to check for breaches."
                         }
                       </p>
                     </div>
@@ -124,47 +125,59 @@ const Notifications = () => {
                 <CardHeader>
                   <CardTitle>Scan History</CardTitle>
                   <CardDescription>
-                    {realScans.length > 0
-                      ? `You've run ${realScans.length} real scan${realScans.length === 1 ? '' : 's'}`
-                      : "No real scans performed yet. Sample data shown below"
+                    {isRealTimeScanMode
+                      ? (relevantScans.length > 0
+                          ? `You've run ${relevantScans.length} real scan${relevantScans.length === 1 ? '' : 's'}`
+                          : "No real scans performed yet"
+                        )
+                      : "Scan history with sample and real data"
                     }
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Date</TableHead>
-                        <TableHead>Type</TableHead>
-                        <TableHead>Value</TableHead>
-                        <TableHead>Breaches</TableHead>
-                        <TableHead>Status</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {scanHistory.slice(0, 10).map((scan) => (
-                        <TableRow key={scan.id}>
-                          <TableCell>{new Date(scan.date).toLocaleDateString()}</TableCell>
-                          <TableCell>{scan.type}</TableCell>
-                          <TableCell>{scan.value}</TableCell>
-                          <TableCell>{scan.breachesFound}</TableCell>
-                          <TableCell>
-                            {scan.breachesFound > 0 ? (
-                              <div className="flex items-center">
-                                <span className="h-2 w-2 rounded-full bg-red-500 mr-2"></span>
-                                <span className="text-red-500 font-medium">Alert</span>
-                              </div>
-                            ) : (
-                              <div className="flex items-center">
-                                <span className="h-2 w-2 rounded-full bg-green-500 mr-2"></span>
-                                <span className="text-green-500">Secure</span>
-                              </div>
-                            )}
-                          </TableCell>
+                  {relevantScans.length > 0 ? (
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Date</TableHead>
+                          <TableHead>Type</TableHead>
+                          <TableHead>Value</TableHead>
+                          <TableHead>Breaches</TableHead>
+                          <TableHead>Status</TableHead>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                      </TableHeader>
+                      <TableBody>
+                        {relevantScans.slice(0, 10).map((scan) => (
+                          <TableRow key={scan.id}>
+                            <TableCell>{new Date(scan.date).toLocaleDateString()}</TableCell>
+                            <TableCell>{scan.type}</TableCell>
+                            <TableCell>{scan.value}</TableCell>
+                            <TableCell>{scan.breachesFound}</TableCell>
+                            <TableCell>
+                              {scan.breachesFound > 0 ? (
+                                <div className="flex items-center">
+                                  <span className="h-2 w-2 rounded-full bg-red-500 mr-2"></span>
+                                  <span className="text-red-500 font-medium">Alert</span>
+                                </div>
+                              ) : (
+                                <div className="flex items-center">
+                                  <span className="h-2 w-2 rounded-full bg-green-500 mr-2"></span>
+                                  <span className="text-green-500">Secure</span>
+                                </div>
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  ) : (
+                    <div className="text-center py-8 text-muted-foreground">
+                      {isRealTimeScanMode
+                        ? "No real-time scans performed yet. Run a scan in real-time mode to see results here."
+                        : "No scan history available. Try scanning some data first."
+                      }
+                    </div>
+                  )}
                 </CardContent>
               </Card>
               
