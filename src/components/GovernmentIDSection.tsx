@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -16,6 +15,8 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { ShieldAlert, AlertTriangle, Lock, Loader2 } from 'lucide-react';
+import { useScan } from '@/contexts/ScanContext';
+import { BreachData } from '@/components/BreachCard';
 
 type GovernmentIDType = 
   'aadhar' | 
@@ -53,6 +54,9 @@ const GovernmentIDSection = () => {
   const [scanProgress, setScanProgress] = useState(0);
   const [isEncryptionConfirmed, setIsEncryptionConfirmed] = useState(false);
   const [validationError, setValidationError] = useState('');
+  
+  // Get the scan context
+  const { addRealScan } = useScan();
 
   // Advanced ID encryption for security
   const secureEncrypt = (value: string, type: GovernmentIDType): string => {
@@ -139,38 +143,37 @@ const GovernmentIDSection = () => {
                 // Determine if breach found - now using our simulated database
                 const breachFound = checkBreachDatabase(idValue, idType);
                 
+                // Create breach data if found
+                let foundBreaches: BreachData[] = [];
+                
                 if (breachFound) {
+                  // Create a real breach entry
+                  foundBreaches = [{
+                    id: `breach-${Date.now()}`,
+                    title: `${getIdTypeName(idType)} Breach Detected`,
+                    domain: 'darkwebmarketplace.onion',
+                    breachDate: new Date(Date.now() - 7776000000).toISOString(), // ~90 days ago
+                    affectedData: [getIdTypeName(idType), 'Personal Information', 'Identity Documents'],
+                    riskLevel: 'high',
+                    verified: true,
+                    description: `Your ${getIdTypeName(idType)} appears to have been exposed in a recent dark web breach. This is a serious security risk that could lead to identity theft.`
+                  }];
+                  
                   toast.error('Alert: Your ID may have been exposed in a data breach', {
                     duration: 5000
                   });
                   
-                  // Navigate to results with detailed breach info
-                  navigate('/results', { 
-                    state: { 
-                      scanType: 'governmentID',
-                      idType,
-                      breachDetected: true,
-                      riskLevel: 'high',
-                      breachSource: 'Dark web marketplace',
-                      breachDate: new Date(Date.now() - 7776000000).toISOString(), // ~90 days ago
-                      affectedRecords: Math.floor(Math.random() * 100000) + 5000,
-                      timestamp: new Date().toISOString()
-                    }
-                  });
+                  // Add the real scan to our context
+                  addRealScan(idType, idValue, foundBreaches);
                 } else {
                   toast.success('Scan completed. No breaches detected for your ID.');
                   
-                  navigate('/results', { 
-                    state: { 
-                      scanType: 'governmentID',
-                      idType,
-                      breachDetected: false,
-                      riskLevel: 'low',
-                      lastScanDate: new Date().toISOString(),
-                      timestamp: new Date().toISOString()
-                    }
-                  });
+                  // Add the real scan to our context (with empty breaches)
+                  addRealScan(idType, idValue, []);
                 }
+                
+                // Navigate to results with detailed breach info
+                navigate('/results');
               }, 700);
             }, 700);
           }, 800);

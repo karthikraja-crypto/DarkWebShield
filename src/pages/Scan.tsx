@@ -2,10 +2,11 @@
 import React from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import ScanForm from '@/components/ScanForm';
 import GovernmentIDSection from '@/components/GovernmentIDSection';
+import ScanFormWrapper from '@/components/ScanFormWrapper';
 import { Shield, Search, Lock, FileText, Scan as ScanIcon, ShieldAlert } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import DataSourceIndicator from '@/components/DataSourceIndicator';
 
 const Scan = () => {
   return (
@@ -27,8 +28,10 @@ const Scan = () => {
                 Check if your personal information has been leaked in data breaches
               </p>
             </div>
+            
+            <DataSourceIndicator />
 
-            <Tabs defaultValue="personal" className="mb-12">
+            <Tabs defaultValue="personal" className="mb-12 mt-6">
               <TabsList className="grid w-full grid-cols-2 mb-8">
                 <TabsTrigger value="personal" className="py-3">
                   <div className="flex items-center gap-2">
@@ -47,7 +50,7 @@ const Scan = () => {
               <TabsContent value="personal">
                 <div className="grid md:grid-cols-2 gap-8 items-center">
                   <div>
-                    <ScanForm />
+                    <ScanFormWrapper />
                   </div>
                   
                   <div className="space-y-6">

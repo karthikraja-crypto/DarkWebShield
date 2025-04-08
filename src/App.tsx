@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, createContext } from 'react';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -15,6 +14,7 @@ import Signup from "./pages/Signup";
 import Settings from "./pages/Settings";
 import About from "./pages/About";
 import NotFound from "./pages/NotFound";
+import { ScanProvider } from "./contexts/ScanContext";
 
 // Create a query client
 const queryClient = new QueryClient();
@@ -102,35 +102,37 @@ const App: React.FC = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthContext.Provider value={{ isLoggedIn, login, logout, user, updateUser }}>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/dashboard" element={
-                isLoggedIn ? <Dashboard /> : <Navigate to="/login" replace state={{ from: '/dashboard' }} />
-              } />
-              <Route path="/scan" element={
-                isLoggedIn ? <Scan /> : <Navigate to="/login" replace state={{ from: '/scan' }} />
-              } />
-              <Route path="/results" element={
-                isLoggedIn ? <Results /> : <Navigate to="/login" replace state={{ from: '/results' }} />
-              } />
-              <Route path="/notifications" element={
-                isLoggedIn ? <Notifications /> : <Navigate to="/login" replace state={{ from: '/notifications' }} />
-              } />
-              <Route path="/login" element={<Login />} />
-              <Route path="/signup" element={<Signup />} />
-              <Route path="/settings" element={
-                isLoggedIn ? <Settings /> : <Navigate to="/login" replace state={{ from: '/settings' }} />
-              } />
-              <Route path="/about" element={<About />} />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-        </TooltipProvider>
+        <ScanProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/dashboard" element={
+                  isLoggedIn ? <Dashboard /> : <Navigate to="/login" replace state={{ from: '/dashboard' }} />
+                } />
+                <Route path="/scan" element={
+                  isLoggedIn ? <Scan /> : <Navigate to="/login" replace state={{ from: '/scan' }} />
+                } />
+                <Route path="/results" element={
+                  isLoggedIn ? <Results /> : <Navigate to="/login" replace state={{ from: '/results' }} />
+                } />
+                <Route path="/notifications" element={
+                  isLoggedIn ? <Notifications /> : <Navigate to="/login" replace state={{ from: '/notifications' }} />
+                } />
+                <Route path="/login" element={<Login />} />
+                <Route path="/signup" element={<Signup />} />
+                <Route path="/settings" element={
+                  isLoggedIn ? <Settings /> : <Navigate to="/login" replace state={{ from: '/settings' }} />
+                } />
+                <Route path="/about" element={<About />} />
+                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </BrowserRouter>
+          </TooltipProvider>
+        </ScanProvider>
       </AuthContext.Provider>
     </QueryClientProvider>
   );
