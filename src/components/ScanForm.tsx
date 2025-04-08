@@ -23,6 +23,11 @@ import { Mail, Phone, User, CreditCard, Building, AlertTriangle, Network, BadgeA
 
 type ScanType = 'email' | 'phone' | 'username' | 'creditCard' | 'bankAccount' | 'idNumber' | 'ipAddress' | 'physicalAddress' | 'password';
 
+// Add onSubmit prop to component definition
+interface ScanFormProps {
+  onSubmit: (type: string, value: string) => void;
+}
+
 // Data validation patterns
 const VALIDATION_PATTERNS = {
   email: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
@@ -49,8 +54,7 @@ const BREACH_SAMPLES = {
   password: ['password', '123456', 'qwerty', 'admin']
 };
 
-const ScanForm = () => {
-  const navigate = useNavigate();
+const ScanForm = ({ onSubmit }: ScanFormProps) => {
   const [scanType, setScanType] = useState<ScanType>('email');
   const [inputValue, setInputValue] = useState('');
   const [isScanning, setIsScanning] = useState(false);
@@ -170,39 +174,8 @@ const ScanForm = () => {
     const finalizeScan = () => {
       setIsScanning(false);
       
-      const result = simulateBreachCheck(scanType, inputValue);
-      
-      if (result.breached) {
-        toast.error(`Alert: Your ${scanType} was found in ${result.breachCount} data breaches`, {
-          duration: 5000
-        });
-        
-        navigate('/results', { 
-          state: { 
-            scanType,
-            inputValue: scanType === 'creditCard' ? '****' + inputValue : inputValue,
-            breachDetected: true,
-            confidence: result.confidence,
-            breachCount: result.breachCount,
-            breachSources: result.sources,
-            riskLevel: result.confidence > 80 ? 'high' : 'medium',
-            timestamp: new Date().toISOString()
-          }
-        });
-      } else {
-        toast.success(`Good news! Your ${scanType} was not found in any breaches.`);
-        
-        navigate('/results', { 
-          state: { 
-            scanType,
-            inputValue: scanType === 'creditCard' ? '****' + inputValue : inputValue,
-            breachDetected: false,
-            confidence: result.confidence,
-            riskLevel: 'low',
-            timestamp: new Date().toISOString()
-          }
-        });
-      }
+      // Use the onSubmit prop passed from parent
+      onSubmit(scanType, inputValue);
     };
     
     runNextPhase();
