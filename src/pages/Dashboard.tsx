@@ -34,6 +34,21 @@ const Dashboard: React.FC = () => {
     navigate('/notifications');
   };
 
+  // Calculate risk factor based on security score
+  const calculateRiskFactor = (): 'high' | 'medium' | 'low' => {
+    if (securityScore < 50) return 'high';
+    if (securityScore < 80) return 'medium';
+    return 'low';
+  };
+
+  // Get the latest scan date from scan history, or use current date if no history
+  const getLastScanDate = (): string => {
+    if (scanHistory.length > 0) {
+      return scanHistory[0].date;
+    }
+    return new Date().toISOString();
+  };
+
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar />
@@ -73,7 +88,12 @@ const Dashboard: React.FC = () => {
             {/* Security Score */}
             <Card className="col-span-1">
               <CardContent className="pt-6">
-                <SecurityScoreCard score={securityScore} />
+                <SecurityScoreCard 
+                  score={securityScore} 
+                  breachCount={breaches.length}
+                  lastScanDate={getLastScanDate()}
+                  riskFactor={calculateRiskFactor()}
+                />
               </CardContent>
             </Card>
 
@@ -266,4 +286,5 @@ const Dashboard: React.FC = () => {
   );
 };
 
+// Add the default export for the Dashboard component
 export default Dashboard;
