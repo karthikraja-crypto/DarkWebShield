@@ -5,7 +5,7 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { FileText } from 'lucide-react';
+import { FileText, Shield, CheckCircle2 } from 'lucide-react';
 import SecurityScoreCard from '@/components/SecurityScoreCard';
 import RecommendationsList from '@/components/RecommendationsList';
 import BreachCard from '@/components/BreachCard';
@@ -68,6 +68,16 @@ const Results = () => {
       toast.success('Comprehensive security report has been generated and downloaded');
     }, 1000);
   };
+
+  // Security tips to show when no breaches are found
+  const securityTips = [
+    "Use strong, unique passwords for each account",
+    "Enable two-factor authentication wherever possible",
+    "Regularly update your software and applications",
+    "Be cautious of phishing attempts and suspicious emails",
+    "Monitor your accounts and credit reports regularly",
+    "Use a password manager to secure your credentials"
+  ];
 
   if (isLoading) {
     return (
@@ -145,12 +155,29 @@ const Results = () => {
                   ))
                 ) : (
                   <Card className="cyber-card p-6">
-                    <div className="text-center">
-                      <p className="text-muted-foreground mb-2">No breaches detected</p>
-                      <p className="text-sm text-muted-foreground">
+                    <div className="text-center py-6">
+                      <CheckCircle2 className="h-12 w-12 text-green-500 mx-auto mb-4" />
+                      <h3 className="text-xl font-medium mb-3">No breaches found</h3>
+                      <p className="text-muted-foreground mb-6 max-w-lg mx-auto">
                         Good news! We didn't find your information in any known data breaches.
                         Continue to monitor your accounts regularly for best security practices.
                       </p>
+                      
+                      {/* Security tips */}
+                      <div className="bg-cyber-dark/20 rounded-lg p-4 max-w-lg mx-auto">
+                        <div className="flex items-center gap-2 mb-3">
+                          <Shield className="h-5 w-5 text-cyber-primary" />
+                          <h4 className="font-medium">Security Tips</h4>
+                        </div>
+                        <ul className="text-left text-sm space-y-2">
+                          {securityTips.map((tip, index) => (
+                            <li key={index} className="flex items-start gap-2">
+                              <span className="text-cyber-primary text-lg leading-none">•</span>
+                              <span>{tip}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
                     </div>
                   </Card>
                 )}
