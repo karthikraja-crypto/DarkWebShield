@@ -36,7 +36,18 @@ const Results = () => {
     return () => clearTimeout(timer);
   }, [location]);
 
+  // Get the most recent scan from history
+  const getLastScanType = () => {
+    return scanHistory.length > 0 ? scanHistory[0].type : 'Unknown';
+  };
+
+  const isRealTimeScan = () => {
+    // Check if the title of any breach contains "Real-Time"
+    return breaches.some(breach => breach.title.includes('Real-Time'));
+  };
+
   const handleGenerateOverallReport = () => {
+    const reportPrefix = isRealTimeScan() ? 'real-time-scan' : 'darkwebshield-scan';
     toast.info('Generating comprehensive security report...');
     
     // Prepare the report data
@@ -64,7 +75,7 @@ const Results = () => {
     }));
     
     setTimeout(() => {
-      exportOverallReport(reportData, recommendationsData, scanHistoryData, 'darkwebshield-scan-results');
+      exportOverallReport(reportData, recommendationsData, scanHistoryData, reportPrefix + '-results');
       toast.success('Comprehensive security report has been generated and downloaded');
     }, 1000);
   };
@@ -103,11 +114,14 @@ const Results = () => {
           <div className="mb-8 flex justify-between items-center">
             <div>
               <h1 className="text-3xl font-bold mb-2 flex items-center">
-                Scan Results 
+                {isRealTimeScan() ? 'Real-Time Scan Results' : 'Scan Results'}
                 <DataSourceIndicator compact />
               </h1>
               <p className="text-muted-foreground">
-                Detailed analysis of potential security threats and vulnerabilities
+                {isRealTimeScan() 
+                  ? 'Real-time analysis of potential security threats and vulnerabilities'
+                  : 'Detailed analysis of potential security threats and vulnerabilities'
+                }
               </p>
             </div>
             <Button 
@@ -116,7 +130,7 @@ const Results = () => {
               onClick={handleGenerateOverallReport}
             >
               <FileText className="mr-2 h-4 w-4" />
-              Overall Report
+              {isRealTimeScan() ? 'Export Real-Time Report' : 'Overall Report'}
             </Button>
           </div>
           
@@ -137,15 +151,22 @@ const Results = () => {
                       <span className="font-semibold">Date:</span> {new Date(getLastScanDate()).toLocaleDateString()}
                     </p>
                     <p>
-                      <span className="font-semibold">Type:</span> {scanHistory.length > 0 ? scanHistory[0].type : 'Unknown'}
+                      <span className="font-semibold">Type:</span> {getLastScanType()}
                     </p>
+                    {isRealTimeScan() && (
+                      <p>
+                        <span className="font-semibold">Scan Mode:</span> <span className="text-cyber-primary">Real-Time</span>
+                      </p>
+                    )}
                   </div>
                 </CardContent>
               </Card>
               
               {/* Breach Information */}
               <div className="space-y-4">
-                <h2 className="text-xl font-bold">Found Breaches</h2>
+                <h2 className="text-xl font-bold">
+                  {isRealTimeScan() ? 'Real-Time Breach Results' : 'Found Breaches'}
+                </h2>
                 {breaches.length > 0 ? (
                   breaches.map((breach) => (
                     <BreachCard 
@@ -157,7 +178,9 @@ const Results = () => {
                   <Card className="cyber-card p-6">
                     <div className="text-center py-6">
                       <CheckCircle2 className="h-12 w-12 text-green-500 mx-auto mb-4" />
-                      <h3 className="text-xl font-medium mb-3">No breaches found</h3>
+                      <h3 className="text-xl font-medium mb-3">
+                        {isRealTimeScan() ? '✅ No breaches found. You\'re safe!' : 'No breaches found'}
+                      </h3>
                       <p className="text-muted-foreground mb-6 max-w-lg mx-auto">
                         Good news! We didn't find your information in any known data breaches.
                         Continue to monitor your accounts regularly for best security practices.

@@ -1,12 +1,14 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import ScanForm from '@/components/ScanForm';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, Lock } from 'lucide-react';
 import { useScan } from '@/contexts/ScanContext';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { BreachData } from '@/components/BreachCard';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 
 // Mock database of compromised emails/phones for testing
 const MOCK_BREACH_DATABASE = {
@@ -18,20 +20,39 @@ const MOCK_BREACH_DATABASE = {
 const ScanFormWrapper = () => {
   const { addRealScan } = useScan();
   const navigate = useNavigate();
+  const [isRealTimeScan, setIsRealTimeScan] = useState(false);
   
   const handleScanSubmit = (type: string, value: string) => {
-    toast.info(`Scanning for ${type.toLowerCase()}: ${value}...`);
+    if (isRealTimeScan) {
+      toast.info(`Performing real-time scan for ${type.toLowerCase()}: ${value}...`);
+    } else {
+      toast.info(`Scanning for ${type.toLowerCase()}: ${value}...`);
+    }
     
     // Simulate a scanning process
     setTimeout(() => {
-      // Check if value is in our mock database
+      // For real-time scans use a different approach or API
+      // In this demo, we're just using a slightly different method to check the same mock database
       let isCompromised = false;
-      if (type === 'Email' && MOCK_BREACH_DATABASE.emails.includes(value)) {
-        isCompromised = true;
-      } else if (type === 'Phone' && MOCK_BREACH_DATABASE.phones.includes(value)) {
-        isCompromised = true;
-      } else if (type === 'Username' && MOCK_BREACH_DATABASE.usernames.includes(value)) {
-        isCompromised = true;
+      if (isRealTimeScan) {
+        // Real-time scan logic would connect to a real API here
+        // For the demo, we'll use the same mock database but with different messaging
+        if (type === 'Email' && MOCK_BREACH_DATABASE.emails.includes(value)) {
+          isCompromised = true;
+        } else if (type === 'Phone' && MOCK_BREACH_DATABASE.phones.includes(value)) {
+          isCompromised = true;
+        } else if (type === 'Username' && MOCK_BREACH_DATABASE.usernames.includes(value)) {
+          isCompromised = true;
+        }
+      } else {
+        // Sample data scan logic - same as before
+        if (type === 'Email' && MOCK_BREACH_DATABASE.emails.includes(value)) {
+          isCompromised = true;
+        } else if (type === 'Phone' && MOCK_BREACH_DATABASE.phones.includes(value)) {
+          isCompromised = true;
+        } else if (type === 'Username' && MOCK_BREACH_DATABASE.usernames.includes(value)) {
+          isCompromised = true;
+        }
       }
       
       // Create breach data if compromised
@@ -41,7 +62,7 @@ const ScanFormWrapper = () => {
         if (type === 'Email') {
           breaches.push({
             id: `email-breach-${Date.now()}`,
-            title: 'Email Compromise Detected',
+            title: isRealTimeScan ? 'Real-Time Email Compromise Detected' : 'Email Compromise Detected',
             domain: 'multiple-sources.com',
             breachDate: new Date(Date.now() - 15552000000).toISOString(), // ~6 months ago
             affectedData: ['Email', 'Password', 'Personal Information'],
@@ -53,7 +74,7 @@ const ScanFormWrapper = () => {
           // Add a second breach for more realistic data
           breaches.push({
             id: `email-breach-${Date.now() + 1}`,
-            title: 'Social Media Breach',
+            title: isRealTimeScan ? 'Real-Time Social Media Breach' : 'Social Media Breach',
             domain: 'socialmedia.com',
             breachDate: new Date(Date.now() - 31104000000).toISOString(), // ~12 months ago
             affectedData: ['Email', 'Username', 'IP Address'],
@@ -64,7 +85,7 @@ const ScanFormWrapper = () => {
         } else if (type === 'Phone') {
           breaches.push({
             id: `phone-breach-${Date.now()}`,
-            title: 'Telecom Data Breach',
+            title: isRealTimeScan ? 'Real-Time Telecom Data Breach' : 'Telecom Data Breach',
             domain: 'telecom-provider.com',
             breachDate: new Date(Date.now() - 7776000000).toISOString(), // ~3 months ago
             affectedData: ['Phone Number', 'Call Records', 'Account Details'],
@@ -75,7 +96,7 @@ const ScanFormWrapper = () => {
         } else if (type === 'Username') {
           breaches.push({
             id: `username-breach-${Date.now()}`,
-            title: 'Gaming Platform Breach',
+            title: isRealTimeScan ? 'Real-Time Gaming Platform Breach' : 'Gaming Platform Breach',
             domain: 'gaming-platform.com',
             breachDate: new Date(Date.now() - 5184000000).toISOString(), // ~2 months ago
             affectedData: ['Username', 'Email', 'Hashed Password'],
@@ -85,9 +106,17 @@ const ScanFormWrapper = () => {
           });
         }
         
-        toast.error(`Alert: Your ${type.toLowerCase()} was found in a data breach!`, { duration: 5000 });
+        const alertMessage = isRealTimeScan 
+          ? `Alert: Real-time scan found your ${type.toLowerCase()} in a data breach!` 
+          : `Alert: Your ${type.toLowerCase()} was found in a data breach!`;
+          
+        toast.error(alertMessage, { duration: 5000 });
       } else {
-        toast.success(`No breaches found for your ${type.toLowerCase()}`);
+        const successMessage = isRealTimeScan
+          ? `✅ No breaches found. You're safe!`
+          : `No breaches found for your ${type.toLowerCase()}`;
+          
+        toast.success(successMessage);
       }
       
       // Add the scan to our context
@@ -97,22 +126,49 @@ const ScanFormWrapper = () => {
       navigate('/results');
     }, 2000);
   };
+
+  const toggleRealTimeScan = () => {
+    setIsRealTimeScan(!isRealTimeScan);
+    
+    if (!isRealTimeScan) {
+      toast.info("Real-time scan mode activated");
+    } else {
+      toast.info("Switched to sample data scan mode");
+    }
+  };
   
   return (
     <div className="space-y-4">
-      <Alert variant="default" className="bg-muted/30 border-muted">
-        <AlertCircle className="h-4 w-4" />
-        <AlertDescription className="text-sm">
-          Enter your information below to scan for data breaches. For demo purposes, try these test values:
-          <ul className="mt-2 ml-6 list-disc text-xs text-muted-foreground">
-            <li>Email: test@example.com</li>
-            <li>Phone: 5551234567</li>
-            <li>Username: admin123</li>
-          </ul>
-        </AlertDescription>
-      </Alert>
+      <div className="flex items-center justify-between mb-4 pb-2 border-b border-cyber-primary/20">
+        <div className="flex items-center gap-2">
+          <Switch 
+            id="real-time-scan" 
+            checked={isRealTimeScan}
+            onCheckedChange={toggleRealTimeScan}
+            className="data-[state=checked]:bg-cyber-primary"
+          />
+          <Label htmlFor="real-time-scan" className="flex items-center gap-1.5 font-medium cursor-pointer">
+            <Lock className="h-4 w-4" />
+            Enable Real-Time Scan
+          </Label>
+        </div>
+      </div>
       
-      <ScanForm onSubmit={handleScanSubmit} />
+      {!isRealTimeScan && (
+        <Alert variant="default" className="bg-muted/30 border-muted">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription className="text-sm">
+            Enter your information below to scan for data breaches. For demo purposes, try these test values:
+            <ul className="mt-2 ml-6 list-disc text-xs text-muted-foreground">
+              <li>Email: test@example.com</li>
+              <li>Phone: 5551234567</li>
+              <li>Username: admin123</li>
+            </ul>
+          </AlertDescription>
+        </Alert>
+      )}
+      
+      <ScanForm onSubmit={handleScanSubmit} isRealTime={isRealTimeScan} />
     </div>
   );
 };

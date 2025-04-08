@@ -23,12 +23,11 @@ import { Mail, Phone, User, CreditCard, Building, AlertTriangle, Network, BadgeA
 
 type ScanType = 'email' | 'phone' | 'username' | 'creditCard' | 'bankAccount' | 'idNumber' | 'ipAddress' | 'physicalAddress' | 'password';
 
-// Add onSubmit prop to component definition
 interface ScanFormProps {
   onSubmit: (type: string, value: string) => void;
+  isRealTime?: boolean;
 }
 
-// Data validation patterns
 const VALIDATION_PATTERNS = {
   email: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
   phone: /^\d{10}$|^\d{3}-\d{3}-\d{4}$/,
@@ -41,7 +40,6 @@ const VALIDATION_PATTERNS = {
   password: /.{1,}/
 };
 
-// Breach database simulation for more accurate results
 const BREACH_SAMPLES = {
   email: ['test@example.com', 'admin@company.com', 'john.doe@gmail.com', 'info@business.org'],
   phone: ['1234567890', '555-123-4567', '8885551234'],
@@ -54,7 +52,7 @@ const BREACH_SAMPLES = {
   password: ['password', '123456', 'qwerty', 'admin']
 };
 
-const ScanForm = ({ onSubmit }: ScanFormProps) => {
+const ScanForm = ({ onSubmit, isRealTime = false }: ScanFormProps) => {
   const [scanType, setScanType] = useState<ScanType>('email');
   const [inputValue, setInputValue] = useState('');
   const [isScanning, setIsScanning] = useState(false);
@@ -146,12 +144,17 @@ const ScanForm = ({ onSubmit }: ScanFormProps) => {
     
     setIsScanning(true);
     setScanProgress(0);
-    toast.info(`Starting scan for ${scanType}...`, { id: 'scan-progress' });
+    
+    const scanMessage = isRealTime 
+      ? `Starting real-time scan for ${scanType}...`
+      : `Starting scan for ${scanType}...`;
+    
+    toast.info(scanMessage, { id: 'scan-progress' });
     
     const scanPhases = [
-      { progress: 15, message: 'Initializing secure scanning environment...' },
+      { progress: 15, message: isRealTime ? 'Initializing secure real-time scanning environment...' : 'Initializing secure scanning environment...' },
       { progress: 30, message: 'Searching public breach databases...' },
-      { progress: 45, message: 'Scanning dark web forums...' },
+      { progress: 45, message: isRealTime ? 'Scanning dark web forums in real-time...' : 'Scanning dark web forums...' },
       { progress: 60, message: 'Searching encrypted marketplaces...' },
       { progress: 75, message: 'Cross-referencing with known breaches...' },
       { progress: 90, message: 'Analyzing results and creating report...' },
@@ -173,8 +176,6 @@ const ScanForm = ({ onSubmit }: ScanFormProps) => {
     
     const finalizeScan = () => {
       setIsScanning(false);
-      
-      // Use the onSubmit prop passed from parent
       onSubmit(scanType, inputValue);
     };
     
@@ -248,9 +249,14 @@ const ScanForm = ({ onSubmit }: ScanFormProps) => {
   return (
     <Card className="cyber-card w-full">
       <CardHeader>
-        <CardTitle className="text-cyber-primary">Personal Info Scan</CardTitle>
+        <CardTitle className="text-cyber-primary">
+          {isRealTime ? 'Real-Time Scan' : 'Personal Info Scan'}
+        </CardTitle>
         <CardDescription>
-          Check if your personal information has been exposed in data breaches
+          {isRealTime 
+            ? 'Check if your personal information has been exposed using real-time breach detection'
+            : 'Check if your personal information has been exposed in data breaches'
+          }
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -319,7 +325,7 @@ const ScanForm = ({ onSubmit }: ScanFormProps) => {
           >
             {isScanning ? (
               <>
-                <span className="mr-2">Scanning</span>
+                <span className="mr-2">{isRealTime ? 'Real-Time Scanning' : 'Scanning'}</span>
                 <div className="relative h-4 w-36 bg-cyber-dark/20 overflow-hidden rounded-full">
                   <div 
                     className="h-full bg-scan-line animate-scanning" 
@@ -328,13 +334,16 @@ const ScanForm = ({ onSubmit }: ScanFormProps) => {
                 </div>
                 <span className="ml-2">{scanProgress}%</span>
               </>
-            ) : 'Start Scan'}
+            ) : isRealTime ? 'Start Real-Time Scan' : 'Start Scan'}
           </Button>
         </form>
       </CardContent>
       <CardFooter className="flex justify-center border-t border-cyber-primary/20 pt-4">
         <p className="text-xs text-muted-foreground text-center">
-          Powered by advanced AI and dark web monitoring technology
+          {isRealTime 
+            ? 'Powered by advanced AI and real-time dark web monitoring technology'
+            : 'Powered by advanced AI and dark web monitoring technology'
+          }
         </p>
       </CardFooter>
     </Card>
