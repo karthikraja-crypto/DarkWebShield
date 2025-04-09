@@ -1,7 +1,6 @@
 
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { AlertOctagon, AlertCircle } from 'lucide-react';
 import { useScan } from '@/contexts/ScanContext';
 
@@ -10,7 +9,7 @@ interface DataSourceIndicatorProps {
 }
 
 const DataSourceIndicator = ({ compact = false }: DataSourceIndicatorProps) => {
-  const { isRealData, setGlobalRealTimeScanMode } = useScan();
+  const { isRealData } = useScan();
   
   if (compact) {
     return (
@@ -24,7 +23,7 @@ const DataSourceIndicator = ({ compact = false }: DataSourceIndicatorProps) => {
   }
   
   return (
-    <div className="flex items-center justify-between p-2 bg-muted/30 rounded-md">
+    <div className="flex items-center p-2 bg-muted/30 rounded-md">
       <div className="flex items-center gap-2">
         {isRealData ? (
           <AlertOctagon className="h-4 w-4 text-destructive" />
@@ -37,13 +36,6 @@ const DataSourceIndicator = ({ compact = false }: DataSourceIndicatorProps) => {
             : 'Viewing sample data for demonstration purposes'}
         </span>
       </div>
-      <Button 
-        variant="outline" 
-        size="sm"
-        onClick={() => setGlobalRealTimeScanMode(!isRealData)}
-      >
-        {isRealData ? 'View Sample Data' : 'View Real Data'}
-      </Button>
     </div>
   );
 };
