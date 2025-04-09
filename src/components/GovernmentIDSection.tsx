@@ -47,6 +47,52 @@ const BREACH_DATABASE = {
   ssn: ['1234', '5678', '9012', '3456']
 };
 
+// Platforms that are scanned during the process
+const SCAN_PLATFORMS = [
+  {
+    name: "Dark Web Marketplaces",
+    description: "Anonymous marketplaces where stolen data is bought and sold",
+    examples: ["Dream Market", "Empire Market", "AlphaBay", "Hydra"],
+    scanTimeMs: 800
+  },
+  {
+    name: "Known Data Breach Repositories",
+    description: "Databases containing previously confirmed data breaches",
+    examples: ["HaveIBeenPwned Database", "BreachCompilation", "Collections #1-5"],
+    scanTimeMs: 600
+  },
+  {
+    name: "Underground Hacking Forums",
+    description: "Private forums where hackers share breached data",
+    examples: ["RaidForums", "XSS.is", "Exploit.in", "OGUsers"],
+    scanTimeMs: 700
+  },
+  {
+    name: "Paste Sites",
+    description: "Public and private paste services often used for data dumps",
+    examples: ["Pastebin", "GitHub Gists", "PrivateBin", "JustPaste.it"],
+    scanTimeMs: 500
+  },
+  {
+    name: "Data Leak Collections",
+    description: "Aggregated collections of multiple data leaks",
+    examples: ["Anti Public Combo List", "Exploit.in", "Snusbase"],
+    scanTimeMs: 900
+  },
+  {
+    name: "Criminal Marketplaces",
+    description: "Platforms specifically for trading stolen credentials and PII",
+    examples: ["Genesis Market", "Russian Market", "Brian's Club"],
+    scanTimeMs: 750
+  },
+  {
+    name: "Compromised Credentials Databases",
+    description: "Specialized databases indexing leaked login information",
+    examples: ["LeakCheck", "DeHashed", "Leaked Source", "Breach-Parse"],
+    scanTimeMs: 650
+  }
+];
+
 const GovernmentIDSection = () => {
   const navigate = useNavigate();
   const [idType, setIdType] = useState<GovernmentIDType>('passport');
@@ -55,6 +101,7 @@ const GovernmentIDSection = () => {
   const [scanProgress, setScanProgress] = useState(0);
   const [isEncryptionConfirmed, setIsEncryptionConfirmed] = useState(false);
   const [validationError, setValidationError] = useState('');
+  const [currentScanPlatform, setCurrentScanPlatform] = useState('');
   
   // Get the scan context
   const { addRealScan, isRealTimeScanMode } = useScan();
@@ -109,9 +156,10 @@ const GovernmentIDSection = () => {
     const encryptedValue = secureEncrypt(idValue, idType);
     console.log('Encrypted ID:', encryptedValue); // Would be removed in production
     
-    // Simulate advanced scanning process
+    // Initialize scanning process
     setIsScanning(true);
     setScanProgress(0);
+    setCurrentScanPlatform('Initializing secure scanning environment');
 
     const scanMessage = isRealTimeScanMode
       ? `Starting real-time secure scan for ${getIdTypeName(idType)}...`
@@ -119,79 +167,92 @@ const GovernmentIDSection = () => {
       
     toast.info(scanMessage);
     
-    // Simulate multi-stage scanning process
-    const simulateScanStages = () => {
-      // Stage 1: Initial encryption check
-      setTimeout(() => {
-        setScanProgress(20);
-        toast.info('Verifying encryption integrity...', { id: 'scan-progress' });
-        
-        // Stage 2: First database check
-        setTimeout(() => {
-          setScanProgress(40);
-          toast.info('Searching primary breach database...', { id: 'scan-progress' });
+    // Start the comprehensive scanning process
+    setTimeout(() => {
+      setScanProgress(10);
+      setCurrentScanPlatform('Verifying encryption integrity');
+      
+      // Begin platform scanning sequence
+      let progressIncrement = 80 / SCAN_PLATFORMS.length;
+      let currentProgress = 10;
+      let platformIndex = 0;
+      
+      const scanNextPlatform = () => {
+        if (platformIndex < SCAN_PLATFORMS.length) {
+          const platform = SCAN_PLATFORMS[platformIndex];
+          currentProgress += progressIncrement;
+          setScanProgress(Math.round(currentProgress));
+          setCurrentScanPlatform(`Scanning ${platform.name}`);
           
-          // Stage 3: Deep web scan
+          // Display more detailed toast about each platform
+          toast.info(
+            `Scanning ${platform.name}: ${platform.description}. Checking ${platform.examples.slice(0, 2).join(", ")} and others.`, 
+            { id: 'scan-progress', duration: platform.scanTimeMs }
+          );
+          
+          platformIndex++;
+          setTimeout(scanNextPlatform, platform.scanTimeMs);
+        } else {
+          // Scanning complete, compile results
+          setScanProgress(95);
+          setCurrentScanPlatform('Compiling scan results');
+          
           setTimeout(() => {
-            setScanProgress(60);
-            toast.info('Scanning deep web forums...', { id: 'scan-progress' });
+            setScanProgress(100);
+            setCurrentScanPlatform('Scan complete');
+            setIsScanning(false);
             
-            // Stage 4: Dark web marketplace scan
-            setTimeout(() => {
-              setScanProgress(80);
-              toast.info('Analyzing dark web marketplaces...', { id: 'scan-progress' });
+            // Determine if breach found
+            const breachFound = checkBreachDatabase(idValue, idType);
+            
+            // Create breach data if found
+            let foundBreaches: BreachData[] = [];
+            
+            if (breachFound) {
+              // Choose random platforms where the breach was found
+              const breachPlatforms = [...SCAN_PLATFORMS]
+                .sort(() => 0.5 - Math.random())
+                .slice(0, 2)
+                .map(p => p.name);
+                
+              // Create a real breach entry with more detailed information
+              foundBreaches = [{
+                id: `breach-${Date.now()}`,
+                title: `${getIdTypeName(idType)} Breach Detected`,
+                domain: `${breachPlatforms[0].toLowerCase().replace(/\s+/g, '')}.onion`,
+                breachDate: new Date(Date.now() - 7776000000).toISOString(), // ~90 days ago
+                affectedData: [getIdTypeName(idType), 'Personal Information', 'Identity Documents'],
+                riskLevel: 'high',
+                verified: true,
+                description: `Your ${getIdTypeName(idType)} was found exposed in ${breachPlatforms.join(' and ')}. This breach included personally identifiable information and may put you at risk of identity theft.`
+              }];
               
-              // Final stage: Results compilation
-              setTimeout(() => {
-                setScanProgress(100);
-                setIsScanning(false);
+              toast.error(`Alert: Your ${getIdTypeName(idType)} was found in multiple data breaches`, {
+                duration: 5000
+              });
+              
+              // Add the real scan to our context
+              addRealScan(idType, idValue, foundBreaches, isRealTimeScanMode);
+            } else {
+              const successMessage = isRealTimeScanMode
+                ? `✅ Your ${getIdTypeName(idType)} was not found in any of the scanned platforms. You're safe!`
+                : `Scan completed. No breaches detected for your ${getIdTypeName(idType)}.`;
                 
-                // Determine if breach found - now using our simulated database
-                const breachFound = checkBreachDatabase(idValue, idType);
-                
-                // Create breach data if found
-                let foundBreaches: BreachData[] = [];
-                
-                if (breachFound) {
-                  // Create a real breach entry
-                  foundBreaches = [{
-                    id: `breach-${Date.now()}`,
-                    title: `${getIdTypeName(idType)} Breach Detected`,
-                    domain: 'darkwebmarketplace.onion',
-                    breachDate: new Date(Date.now() - 7776000000).toISOString(), // ~90 days ago
-                    affectedData: [getIdTypeName(idType), 'Personal Information', 'Identity Documents'],
-                    riskLevel: 'high',
-                    verified: true,
-                    description: `Your ${getIdTypeName(idType)} appears to have been exposed in a recent dark web breach. This is a serious security risk that could lead to identity theft.`
-                  }];
-                  
-                  toast.error('Alert: Your ID may have been exposed in a data breach', {
-                    duration: 5000
-                  });
-                  
-                  // Add the real scan to our context
-                  addRealScan(idType, idValue, foundBreaches, isRealTimeScanMode);
-                } else {
-                  const successMessage = isRealTimeScanMode
-                    ? '✅ No breaches found. You\'re safe!'
-                    : 'Scan completed. No breaches detected for your ID.';
-                    
-                  toast.success(successMessage);
-                  
-                  // Add the scan to our context (with empty breaches)
-                  addRealScan(idType, idValue, [], isRealTimeScanMode);
-                }
-                
-                // Navigate to results with detailed breach info
-                navigate('/results');
-              }, 700);
-            }, 700);
+              toast.success(successMessage);
+              
+              // Add the scan to our context (with empty breaches)
+              addRealScan(idType, idValue, [], isRealTimeScanMode);
+            }
+            
+            // Navigate to results
+            navigate('/results');
           }, 800);
-        }, 600);
-      }, 500);
-    };
-    
-    simulateScanStages();
+        }
+      };
+      
+      // Start scanning platforms
+      setTimeout(scanNextPlatform, 600);
+    }, 500);
   };
 
   const getIdTypeName = (type: GovernmentIDType): string => {
@@ -309,6 +370,20 @@ const GovernmentIDSection = () => {
                 I understand that my data will be securely encrypted and not stored permanently
               </Label>
             </div>
+            
+            {isRealTimeScanMode && (
+              <div className="mt-3 bg-cyber-primary/10 p-3 rounded-md border border-cyber-primary/20">
+                <h4 className="text-sm font-medium mb-1.5 text-cyber-primary">Real-Time Scan Security</h4>
+                <p className="text-xs text-muted-foreground mb-1">
+                  Your ID will be checked against these breach sources:
+                </p>
+                <ul className="text-xs text-muted-foreground space-y-0.5 list-disc pl-4">
+                  {SCAN_PLATFORMS.map((platform, index) => (
+                    <li key={index}>{platform.name}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </div>
           
           <Button 
@@ -318,14 +393,18 @@ const GovernmentIDSection = () => {
           >
             {isScanning ? (
               <>
-                <span className="mr-2">Scanning</span>
-                <div className="relative h-4 w-36 bg-cyber-dark/20 overflow-hidden rounded-full">
-                  <div 
-                    className="h-full bg-scan-line animate-scanning" 
-                    style={{ width: `${scanProgress}%` }}
-                  />
+                <div className="flex flex-col items-center w-full">
+                  <div className="flex items-center justify-between w-full mb-1">
+                    <span className="text-sm">{currentScanPlatform}</span>
+                    <span className="text-sm ml-2">{scanProgress}%</span>
+                  </div>
+                  <div className="relative h-2 w-full bg-cyber-dark/20 overflow-hidden rounded-full">
+                    <div 
+                      className="h-full bg-scan-line animate-scanning" 
+                      style={{ width: `${scanProgress}%` }}
+                    />
+                  </div>
                 </div>
-                <span className="ml-2">{scanProgress}%</span>
               </>
             ) : (isRealTimeScanMode ? 'Start Real-Time Secure ID Scan' : 'Start Secure ID Scan')}
           </Button>
