@@ -2,7 +2,7 @@ import React, { createContext, useState, useContext, ReactNode, useCallback } fr
 import { BreachData } from '@/components/BreachCard';
 import { Recommendation } from '@/components/RecommendationsList';
 
-// Define types for scan history
+// Define types for scan history and monitoring
 export interface ScanHistoryItem {
   id: string;
   date: string;
@@ -10,6 +10,13 @@ export interface ScanHistoryItem {
   value: string;
   breachesFound: number;
   isRealScan: boolean;
+}
+
+export interface MonitoredId {
+  id: string;
+  type: string;
+  value: string;
+  dateAdded: string;
 }
 
 // Sample breach data
@@ -100,7 +107,11 @@ interface ScanContextType {
   hasNewNotification: boolean;
   clearNotification: () => void;
   getLastScanDate: () => string;
+  getLastScanInfo: () => {scanType: string, scanValue: string};
   useRealTimeScannedData: boolean;
+  monitoredIds: MonitoredId[];
+  toggleMonitoring: (type: string, value: string, enabled: boolean) => void;
+  isIdMonitored: (type: string, value: string) => boolean;
 }
 
 // Create context
@@ -115,6 +126,11 @@ export const ScanProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [securityScore, setSecurityScore] = useState<number>(75);
   const [hasNewNotification, setHasNewNotification] = useState<boolean>(false);
   const [isRealTimeScanMode, setIsRealTimeScanMode] = useState<boolean>(false);
+  const [lastScanInfo, setLastScanInfo] = useState<{scanType: string, scanValue: string}>({
+    scanType: '',
+    scanValue: ''
+  });
+  const [monitoredIds, setMonitoredIds] = useState<MonitoredId[]>([]);
   
   // This state will control whether we show real scanned data or default to samples
   const [useRealTimeScannedData, setUseRealTimeScannedData] = useState<boolean>(false);
@@ -148,6 +164,12 @@ export const ScanProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     // Format the value for privacy (e.g., j***@example.com)
     const maskedValue = maskSensitiveData(value, scanType);
     
+    // Store last scan info
+    setLastScanInfo({
+      scanType: scanType,
+      scanValue: value
+    });
+    
     // Create new scan history item
     const newScanHistoryItem: ScanHistoryItem = {
       id: `scan-${Date.now()}`,
@@ -179,6 +201,36 @@ export const ScanProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }, []);
 
+  // Toggle monitoring for a specific ID
+  const toggleMonitoring = useCallback((type: string, value: string, enabled: boolean) => {
+    if (!type || !value) return;
+    
+    if (enabled) {
+      // Add to monitored IDs if not already there
+      setMonitoredIds(prev => {
+        // Check if already monitored
+        const exists = prev.some(item => item.type === type && item.value === value);
+        if (exists) return prev;
+        
+        // Add new monitored ID
+        return [...prev, {
+          id: `monitor-${Date.now()}`,
+          type,
+          value,
+          dateAdded: new Date().toISOString()
+        }];
+      });
+    } else {
+      // Remove from monitored IDs
+      setMonitoredIds(prev => prev.filter(item => !(item.type === type && item.value === value)));
+    }
+  }, []);
+  
+  // Check if an ID is being monitored
+  const isIdMonitored = useCallback((type: string, value: string): boolean => {
+    return monitoredIds.some(item => item.type === type && item.value === value);
+  }, [monitoredIds]);
+
   // Clear notification marker
   const clearNotification = useCallback(() => {
     setHasNewNotification(false);
@@ -199,6 +251,11 @@ export const ScanProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     // Otherwise return the most recent scan of any type
     return scanHistory[0].date;
   }, [scanHistory, isRealTimeScanMode]);
+  
+  // Get the last scan info (type and value)
+  const getLastScanInfo = useCallback(() => {
+    return lastScanInfo;
+  }, [lastScanInfo]);
 
   // Utility function to mask sensitive data
   const maskSensitiveData = (value: string, type: string): string => {
@@ -341,7 +398,11 @@ export const ScanProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         hasNewNotification,
         clearNotification,
         getLastScanDate,
-        useRealTimeScannedData
+        getLastScanInfo,
+        useRealTimeScannedData,
+        monitoredIds,
+        toggleMonitoring,
+        isIdMonitored
       }}
     >
       {children}

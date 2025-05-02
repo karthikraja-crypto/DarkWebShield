@@ -1,22 +1,50 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import ExportButton from './ExportButton';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Button } from '@/components/ui/button';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { Switch } from '@/components/ui/switch';
+import { bell, bellOff } from 'lucide-react';
+import { toast } from 'sonner';
+import { useScan } from '@/contexts/ScanContext';
 
 interface ScanResultExportProps {
   results: any[];
   className?: string;
   recommendationsData?: any[];
   historyData?: any[];
+  scanType?: string;
+  scanValue?: string;
 }
 
 const ScanResultExport = ({ 
   results, 
   recommendationsData = [],
   historyData = [],
+  scanType = '',
+  scanValue = '',
   className 
 }: ScanResultExportProps) => {
+  const { toggleMonitoring, isIdMonitored } = useScan();
+  const [isMonitoring, setIsMonitoring] = useState<boolean>(scanValue ? isIdMonitored(scanType, scanValue) : false);
+
+  const handleToggleMonitoring = () => {
+    const newState = !isMonitoring;
+    setIsMonitoring(newState);
+    
+    // Call context method to toggle monitoring
+    toggleMonitoring(scanType, scanValue, newState);
+    
+    // Show appropriate toast message
+    if (newState) {
+      toast.success(`Continuous Monitoring enabled for ${scanType}`);
+    } else {
+      toast.info(`Monitoring stopped for ${scanType}`);
+    }
+  };
+
   return (
     <Card className={`cyber-card ${className || ''}`}>
       <CardHeader>
@@ -37,6 +65,32 @@ const ScanResultExport = ({
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
+          {/* Continuous Monitoring Button */}
+          {scanType && scanValue && (
+            <div className="bg-cyber-dark/10 p-4 rounded-md border border-cyber-primary/20 mb-4">
+              <div className="flex justify-between items-center">
+                <div>
+                  <h3 className="text-sm font-medium">🔁 Continuous Monitoring</h3>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {isMonitoring 
+                      ? `Actively monitoring ${scanType}: ${scanValue.replace(/^(.{3}).*(.{3})$/, '$1***$2')}`
+                      : `Enable monitoring for ${scanType}`}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground">
+                    {isMonitoring ? "Enabled" : "Disabled"}
+                  </span>
+                  <Switch
+                    checked={isMonitoring}
+                    onCheckedChange={handleToggleMonitoring}
+                    className={isMonitoring ? "bg-cyber-primary" : ""}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+          
           <div className="bg-cyber-dark/20 p-4 rounded-md">
             <h3 className="text-sm font-medium mb-2">Comprehensive Report</h3>
             <p className="text-sm text-muted-foreground">

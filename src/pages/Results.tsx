@@ -24,7 +24,8 @@ const Results = () => {
     isRealData, 
     securityScore,
     getLastScanDate,
-    isRealTimeScanMode
+    isRealTimeScanMode,
+    getLastScanInfo
   } = useScan();
 
   useEffect(() => {
@@ -35,6 +36,9 @@ const Results = () => {
     
     return () => clearTimeout(timer);
   }, [location]);
+  
+  // Get the last scan type and value
+  const { scanType, scanValue } = getLastScanInfo();
 
   // Get the most recent scan from history
   const getLastScanType = () => {
@@ -160,6 +164,11 @@ const Results = () => {
                     <p>
                       <span className="font-semibold">Type:</span> {getLastScanType()}
                     </p>
+                    {scanType && (
+                      <p>
+                        <span className="font-semibold">Scanned {scanType}:</span> {scanValue ? scanValue.replace(/^(.{3}).*(.{3})$/, '$1***$2') : 'N/A'}
+                      </p>
+                    )}
                     {isRealTimeScanMode && (
                       <p>
                         <span className="font-semibold">Scan Mode:</span> <span className="text-cyber-primary">Real-Time</span>
@@ -224,15 +233,19 @@ const Results = () => {
               />
               <RecommendationsList recommendations={recommendations} />
               
-              {/* Update ScanResultExport with proper data */}
-              <ScanResultExport results={breaches.map(breach => ({
-                BreachName: breach.title,
-                Domain: breach.domain,
-                BreachDate: breach.breachDate,
-                Severity: breach.riskLevel,
-                AffectedData: breach.affectedData.join(', '),
-                Description: breach.description.substring(0, 100) + '...'
-              }))} />
+              {/* Update ScanResultExport with proper data and scan info */}
+              <ScanResultExport 
+                results={breaches.map(breach => ({
+                  BreachName: breach.title,
+                  Domain: breach.domain,
+                  BreachDate: breach.breachDate,
+                  Severity: breach.riskLevel,
+                  AffectedData: breach.affectedData.join(', '),
+                  Description: breach.description.substring(0, 100) + '...'
+                }))} 
+                scanType={scanType}
+                scanValue={scanValue}
+              />
             </div>
           </div>
         </div>
