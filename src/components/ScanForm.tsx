@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
@@ -21,6 +22,7 @@ import {
 } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { Mail, Phone, User, CreditCard, Building, AlertTriangle, Network, BadgeAlert } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 type ScanType = 'email' | 'phone' | 'username' | 'creditCard' | 'bankAccount' | 'idNumber' | 'ipAddress' | 'physicalAddress' | 'password';
 
@@ -31,7 +33,7 @@ interface ScanFormProps {
 
 const VALIDATION_PATTERNS = {
   email: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-  phone: /^\d{10}$|^\d{3}-\d{3}-\d{4}$/,
+  phone: /^(\+91|0)[1-9]\d{9}$/, // Updated to only allow Indian phone numbers
   username: /^[a-zA-Z0-9_]{3,20}$/,
   creditCard: /^\d{4}$/,
   bankAccount: /^\d{6}$/,
@@ -106,6 +108,7 @@ const ScanForm = ({ onSubmit, isRealTime = false }: ScanFormProps) => {
   const [scanProgress, setScanProgress] = useState(0);
   const [validationError, setValidationError] = useState('');
   const [currentScanPlatform, setCurrentScanPlatform] = useState('');
+  const [showPrivacyPopup, setShowPrivacyPopup] = useState(false);
 
   const validateInput = (type: ScanType, value: string): boolean => {
     const pattern = VALIDATION_PATTERNS[type];
@@ -184,65 +187,77 @@ const ScanForm = ({ onSubmit, isRealTime = false }: ScanFormProps) => {
       return;
     }
     
-    if (!validateInput(scanType, inputValue)) {
+    // Special validation for phone numbers - must be Indian format
+    if (scanType === 'phone' && !validateInput(scanType, inputValue)) {
+      toast.error('Invalid phone number format');
+      setValidationError('Please enter a valid Indian phone number starting with +91 or 0, followed by 10 digits');
+      return;
+    } else if (!validateInput(scanType, inputValue)) {
       toast.error(`Invalid format for ${scanType}`);
       setValidationError(`Please enter a valid ${scanType} format`);
       return;
     }
     
-    setIsScanning(true);
-    setScanProgress(0);
-    setCurrentScanPlatform('Initializing secure scanning environment');
+    // Show privacy popup before scanning
+    setShowPrivacyPopup(true);
     
-    const scanMessage = isRealTime 
-      ? `Starting real-time scan for ${scanType}...`
-      : `Starting scan for ${scanType}...`;
-    
-    toast.info(scanMessage);
-    
-    // Begin the comprehensive scanning process similar to GovernmentIDSection
+    // Start scanning after a short delay to ensure the popup is visible
     setTimeout(() => {
-      setScanProgress(10);
-      setCurrentScanPlatform('Verifying encryption integrity');
+      setIsScanning(true);
+      setScanProgress(0);
+      setCurrentScanPlatform('Initializing secure scanning environment');
       
-      // Begin platform scanning sequence
-      let progressIncrement = 80 / SCAN_PLATFORMS.length;
-      let currentProgress = 10;
-      let platformIndex = 0;
+      const scanMessage = isRealTime 
+        ? `Starting real-time scan for ${scanType}...`
+        : `Starting scan for ${scanType}...`;
       
-      const scanNextPlatform = () => {
-        if (platformIndex < SCAN_PLATFORMS.length) {
-          const platform = SCAN_PLATFORMS[platformIndex];
-          currentProgress += progressIncrement;
-          setScanProgress(Math.round(currentProgress));
-          setCurrentScanPlatform(`Scanning ${platform.name}`);
-          
-          // Display more detailed toast about each platform
-          toast.info(
-            `Scanning ${platform.name}: ${platform.description}. Checking ${platform.examples.slice(0, 2).join(", ")} and others.`, 
-            { id: 'scan-progress', duration: platform.scanTimeMs }
-          );
-          
-          platformIndex++;
-          setTimeout(scanNextPlatform, platform.scanTimeMs);
-        } else {
-          // Scanning complete, compile results
-          setScanProgress(95);
-          setCurrentScanPlatform('Compiling scan results');
-          
-          setTimeout(() => {
-            setScanProgress(100);
-            setCurrentScanPlatform('Scan complete');
-            setIsScanning(false);
+      toast.info(scanMessage);
+      
+      // Begin the comprehensive scanning process similar to GovernmentIDSection
+      setTimeout(() => {
+        setScanProgress(10);
+        setCurrentScanPlatform('Verifying encryption integrity');
+        
+        // Begin platform scanning sequence
+        let progressIncrement = 80 / SCAN_PLATFORMS.length;
+        let currentProgress = 10;
+        let platformIndex = 0;
+        
+        const scanNextPlatform = () => {
+          if (platformIndex < SCAN_PLATFORMS.length) {
+            const platform = SCAN_PLATFORMS[platformIndex];
+            currentProgress += progressIncrement;
+            setScanProgress(Math.round(currentProgress));
+            setCurrentScanPlatform(`Scanning ${platform.name}`);
             
-            // Pass the results to the parent component
-            onSubmit(scanType, inputValue);
-          }, 800);
-        }
-      };
-      
-      // Start scanning platforms
-      setTimeout(scanNextPlatform, 600);
+            // Display more detailed toast about each platform
+            toast.info(
+              `Scanning ${platform.name}: ${platform.description}. Checking ${platform.examples.slice(0, 2).join(", ")} and others.`, 
+              { id: 'scan-progress', duration: platform.scanTimeMs }
+            );
+            
+            platformIndex++;
+            setTimeout(scanNextPlatform, platform.scanTimeMs);
+          } else {
+            // Scanning complete, compile results
+            setScanProgress(95);
+            setCurrentScanPlatform('Compiling scan results');
+            
+            setTimeout(() => {
+              setScanProgress(100);
+              setCurrentScanPlatform('Scan complete');
+              setIsScanning(false);
+              setShowPrivacyPopup(false); // Hide privacy popup when scan completes
+              
+              // Pass the results to the parent component
+              onSubmit(scanType, inputValue);
+            }, 800);
+          }
+        };
+        
+        // Start scanning platforms
+        setTimeout(scanNextPlatform, 600);
+      }, 500);
     }, 500);
   };
 
@@ -275,7 +290,7 @@ const ScanForm = ({ onSubmit, isRealTime = false }: ScanFormProps) => {
       case 'email':
         return 'Enter your email address';
       case 'phone':
-        return 'Enter your phone number (e.g., 555-123-4567)';
+        return 'Enter your Indian phone number (e.g., +91 or 0 followed by 10 digits)';
       case 'username':
         return 'Enter your username';
       case 'creditCard':
@@ -324,6 +339,15 @@ const ScanForm = ({ onSubmit, isRealTime = false }: ScanFormProps) => {
         </CardDescription>
       </CardHeader>
       <CardContent>
+        {showPrivacyPopup && (
+          <Alert className="mb-4 bg-cyber-primary/10 border-cyber-primary/20 animate-pulse">
+            <AlertTriangle className="h-5 w-5 text-cyber-primary" />
+            <AlertDescription className="font-medium text-center py-2">
+              Your data/ID won't be stored permanently.
+            </AlertDescription>
+          </Alert>
+        )}
+        
         <form onSubmit={handleSubmit}>
           <div className="space-y-4">
             <div className="space-y-2">
@@ -341,7 +365,7 @@ const ScanForm = ({ onSubmit, isRealTime = false }: ScanFormProps) => {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="email">Email Address</SelectItem>
-                  <SelectItem value="phone">Phone Number</SelectItem>
+                  <SelectItem value="phone">Phone Number (Indian)</SelectItem>
                   <SelectItem value="username">Username</SelectItem>
                   <SelectItem value="creditCard">Credit Card (last 4 digits)</SelectItem>
                   <SelectItem value="bankAccount">Bank Account (last 6 digits)</SelectItem>
@@ -374,6 +398,10 @@ const ScanForm = ({ onSubmit, isRealTime = false }: ScanFormProps) => {
               </div>
               {validationError ? (
                 <p className="text-xs text-red-500 mt-1">{validationError}</p>
+              ) : scanType === 'phone' ? (
+                <p className="text-xs text-muted-foreground mt-1">
+                  Only Indian phone numbers (+91 or 0 followed by 10 digits) are supported.
+                </p>
               ) : (
                 <p className="text-xs text-muted-foreground mt-1">
                   Your data is encrypted and secure. We never store sensitive information.

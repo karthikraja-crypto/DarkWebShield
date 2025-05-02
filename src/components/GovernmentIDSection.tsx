@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -24,27 +23,24 @@ type GovernmentIDType =
   'pan' | 
   'passport' | 
   'drivingLicense' | 
-  'voterID' | 
-  'ssn';
+  'voterID';
 
 // Common patterns for known ID formats
 const ID_PATTERNS = {
-  aadhar: /^\d{4}$/,
-  pan: /^[A-Z0-9]{4}$/,
-  passport: /^[A-Z0-9]{4}$/,
-  drivingLicense: /^[A-Z0-9]{4}$/,
-  voterID: /^[A-Z0-9]{4}$/,
-  ssn: /^\d{4}$/
+  aadhar: /^\d{12}$/,
+  pan: /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/,
+  passport: /^[A-Z]{1}[0-9]{7}$/,
+  drivingLicense: /^[A-Z0-9]{10,16}$/,
+  voterID: /^[A-Z]{3}[0-9]{7}$/
 };
 
 // Known breach database simulation - in real app, this would be an API call
 const BREACH_DATABASE = {
-  aadhar: ['1234', '5678', '9012', '3456'],
-  pan: ['ABCD', 'EFGH', 'IJKL', 'MNOP'],
-  passport: ['A123', 'B456', 'C789', 'D012'],
-  drivingLicense: ['X123', 'Y456', 'Z789', 'W012'],
-  voterID: ['ID34', 'ID56', 'ID78', 'ID90'],
-  ssn: ['1234', '5678', '9012', '3456']
+  aadhar: ['123456789012', '234567890123', '345678901234', '456789012345'],
+  pan: ['ABCDE1234F', 'FGHIJ5678K', 'KLMNO9012P', 'PQRST3456Q'],
+  passport: ['A1234567', 'B2345678', 'C3456789', 'D4567890'],
+  drivingLicense: ['MHXX12345678', 'DLXX67890123', 'UPXX23456789', 'TNXX34567890'],
+  voterID: ['ABC1234567', 'DEF2345678', 'GHI3456789', 'JKL4567890']
 };
 
 // Platforms that are scanned during the process
@@ -102,6 +98,7 @@ const GovernmentIDSection = () => {
   const [isEncryptionConfirmed, setIsEncryptionConfirmed] = useState(false);
   const [validationError, setValidationError] = useState('');
   const [currentScanPlatform, setCurrentScanPlatform] = useState('');
+  const [showPrivacyPopup, setShowPrivacyPopup] = useState(false);
   
   // Get the scan context
   const { addRealScan, isRealTimeScanMode } = useScan();
@@ -152,106 +149,112 @@ const GovernmentIDSection = () => {
       return;
     }
     
+    // Show privacy popup
+    setShowPrivacyPopup(true);
+    
     // Encrypt ID before scanning
     const encryptedValue = secureEncrypt(idValue, idType);
     console.log('Encrypted ID:', encryptedValue); // Would be removed in production
     
-    // Initialize scanning process
-    setIsScanning(true);
-    setScanProgress(0);
-    setCurrentScanPlatform('Initializing secure scanning environment');
-
-    const scanMessage = isRealTimeScanMode
-      ? `Starting real-time secure scan for ${getIdTypeName(idType)}...`
-      : `Starting secure scan for ${getIdTypeName(idType)}...`;
-      
-    toast.info(scanMessage);
-    
-    // Start the comprehensive scanning process
+    // Initialize scanning process after a short delay to ensure popup is visible
     setTimeout(() => {
-      setScanProgress(10);
-      setCurrentScanPlatform('Verifying encryption integrity');
+      setIsScanning(true);
+      setScanProgress(0);
+      setCurrentScanPlatform('Initializing secure scanning environment');
+
+      const scanMessage = isRealTimeScanMode
+        ? `Starting real-time secure scan for ${getIdTypeName(idType)}...`
+        : `Starting secure scan for ${getIdTypeName(idType)}...`;
+        
+      toast.info(scanMessage);
       
-      // Begin platform scanning sequence
-      let progressIncrement = 80 / SCAN_PLATFORMS.length;
-      let currentProgress = 10;
-      let platformIndex = 0;
-      
-      const scanNextPlatform = () => {
-        if (platformIndex < SCAN_PLATFORMS.length) {
-          const platform = SCAN_PLATFORMS[platformIndex];
-          currentProgress += progressIncrement;
-          setScanProgress(Math.round(currentProgress));
-          setCurrentScanPlatform(`Scanning ${platform.name}`);
-          
-          // Display more detailed toast about each platform
-          toast.info(
-            `Scanning ${platform.name}: ${platform.description}. Checking ${platform.examples.slice(0, 2).join(", ")} and others.`, 
-            { id: 'scan-progress', duration: platform.scanTimeMs }
-          );
-          
-          platformIndex++;
-          setTimeout(scanNextPlatform, platform.scanTimeMs);
-        } else {
-          // Scanning complete, compile results
-          setScanProgress(95);
-          setCurrentScanPlatform('Compiling scan results');
-          
-          setTimeout(() => {
-            setScanProgress(100);
-            setCurrentScanPlatform('Scan complete');
-            setIsScanning(false);
+      // Start the comprehensive scanning process
+      setTimeout(() => {
+        setScanProgress(10);
+        setCurrentScanPlatform('Verifying encryption integrity');
+        
+        // Begin platform scanning sequence
+        let progressIncrement = 80 / SCAN_PLATFORMS.length;
+        let currentProgress = 10;
+        let platformIndex = 0;
+        
+        const scanNextPlatform = () => {
+          if (platformIndex < SCAN_PLATFORMS.length) {
+            const platform = SCAN_PLATFORMS[platformIndex];
+            currentProgress += progressIncrement;
+            setScanProgress(Math.round(currentProgress));
+            setCurrentScanPlatform(`Scanning ${platform.name}`);
             
-            // Determine if breach found
-            const breachFound = checkBreachDatabase(idValue, idType);
+            // Display more detailed toast about each platform
+            toast.info(
+              `Scanning ${platform.name}: ${platform.description}. Checking ${platform.examples.slice(0, 2).join(", ")} and others.`, 
+              { id: 'scan-progress', duration: platform.scanTimeMs }
+            );
             
-            // Create breach data if found
-            let foundBreaches: BreachData[] = [];
+            platformIndex++;
+            setTimeout(scanNextPlatform, platform.scanTimeMs);
+          } else {
+            // Scanning complete, compile results
+            setScanProgress(95);
+            setCurrentScanPlatform('Compiling scan results');
             
-            if (breachFound) {
-              // Choose random platforms where the breach was found
-              const breachPlatforms = [...SCAN_PLATFORMS]
-                .sort(() => 0.5 - Math.random())
-                .slice(0, 2)
-                .map(p => p.name);
+            setTimeout(() => {
+              setScanProgress(100);
+              setCurrentScanPlatform('Scan complete');
+              setIsScanning(false);
+              setShowPrivacyPopup(false); // Hide privacy popup when scan completes
+              
+              // Determine if breach found
+              const breachFound = checkBreachDatabase(idValue, idType);
+              
+              // Create breach data if found
+              let foundBreaches: BreachData[] = [];
+              
+              if (breachFound) {
+                // Choose random platforms where the breach was found
+                const breachPlatforms = [...SCAN_PLATFORMS]
+                  .sort(() => 0.5 - Math.random())
+                  .slice(0, 2)
+                  .map(p => p.name);
+                  
+                // Create a real breach entry with more detailed information
+                foundBreaches = [{
+                  id: `breach-${Date.now()}`,
+                  title: `${getIdTypeName(idType)} Breach Detected`,
+                  domain: `${breachPlatforms[0].toLowerCase().replace(/\s+/g, '')}.onion`,
+                  breachDate: new Date(Date.now() - 7776000000).toISOString(), // ~90 days ago
+                  affectedData: [getIdTypeName(idType), 'Personal Information', 'Identity Documents'],
+                  riskLevel: 'high',
+                  verified: true,
+                  description: `Your ${getIdTypeName(idType)} was found exposed in ${breachPlatforms.join(' and ')}. This breach included personally identifiable information and may put you at risk of identity theft.`
+                }];
                 
-              // Create a real breach entry with more detailed information
-              foundBreaches = [{
-                id: `breach-${Date.now()}`,
-                title: `${getIdTypeName(idType)} Breach Detected`,
-                domain: `${breachPlatforms[0].toLowerCase().replace(/\s+/g, '')}.onion`,
-                breachDate: new Date(Date.now() - 7776000000).toISOString(), // ~90 days ago
-                affectedData: [getIdTypeName(idType), 'Personal Information', 'Identity Documents'],
-                riskLevel: 'high',
-                verified: true,
-                description: `Your ${getIdTypeName(idType)} was found exposed in ${breachPlatforms.join(' and ')}. This breach included personally identifiable information and may put you at risk of identity theft.`
-              }];
-              
-              toast.error(`Alert: Your ${getIdTypeName(idType)} was found in multiple data breaches`, {
-                duration: 5000
-              });
-              
-              // Add the real scan to our context
-              addRealScan(idType, idValue, foundBreaches, isRealTimeScanMode);
-            } else {
-              const successMessage = isRealTimeScanMode
-                ? `✅ Your ${getIdTypeName(idType)} was not found in any of the scanned platforms. You're safe!`
-                : `Scan completed. No breaches detected for your ${getIdTypeName(idType)}.`;
+                toast.error(`Alert: Your ${getIdTypeName(idType)} was found in multiple data breaches`, {
+                  duration: 5000
+                });
                 
-              toast.success(successMessage);
+                // Add the real scan to our context
+                addRealScan(idType, idValue, foundBreaches, isRealTimeScanMode);
+              } else {
+                const successMessage = isRealTimeScanMode
+                  ? `✅ Your ${getIdTypeName(idType)} was not found in any of the scanned platforms. You're safe!`
+                  : `Scan completed. No breaches detected for your ${getIdTypeName(idType)}.`;
+                  
+                toast.success(successMessage);
+                
+                // Add the scan to our context (with empty breaches)
+                addRealScan(idType, idValue, [], isRealTimeScanMode);
+              }
               
-              // Add the scan to our context (with empty breaches)
-              addRealScan(idType, idValue, [], isRealTimeScanMode);
-            }
-            
-            // Navigate to results
-            navigate('/results');
-          }, 800);
-        }
-      };
-      
-      // Start scanning platforms
-      setTimeout(scanNextPlatform, 600);
+              // Navigate to results
+              navigate('/results');
+            }, 800);
+          }
+        };
+        
+        // Start scanning platforms
+        setTimeout(scanNextPlatform, 600);
+      }, 500);
     }, 500);
   };
 
@@ -262,20 +265,18 @@ const GovernmentIDSection = () => {
       case 'passport': return 'Passport Number';
       case 'drivingLicense': return 'Driver\'s License Number';
       case 'voterID': return 'Voter ID';
-      case 'ssn': return 'Social Security Number (SSN)';
       default: return 'Government ID';
     }
   };
 
   const getIdPlaceholder = (type: GovernmentIDType): string => {
     switch (type) {
-      case 'aadhar': return 'Enter last 4 digits of Aadhar';
-      case 'pan': return 'Enter last 4 digits of PAN';
-      case 'passport': return 'Enter last 4 digits of Passport';
-      case 'drivingLicense': return 'Enter last 4 digits of License';
-      case 'voterID': return 'Enter last 4 digits of Voter ID';
-      case 'ssn': return 'Enter last 4 digits of SSN';
-      default: return 'Enter last 4 digits';
+      case 'aadhar': return 'Enter complete 12-digit Aadhar Number';
+      case 'pan': return 'Enter PAN Card Number (e.g., ABCDE1234F)';
+      case 'passport': return 'Enter full Passport Number (e.g., A1234567)';
+      case 'drivingLicense': return 'Enter complete Driver\'s License Number';
+      case 'voterID': return 'Enter full Voter ID (e.g., ABC1234567)';
+      default: return 'Enter your ID number';
     }
   };
 
@@ -291,11 +292,20 @@ const GovernmentIDSection = () => {
         </CardDescription>
       </CardHeader>
       <CardContent>
+        {showPrivacyPopup && (
+          <Alert className="mb-4 bg-cyber-primary/10 border-cyber-primary/20 animate-pulse">
+            <AlertTriangle className="h-5 w-5 text-cyber-primary" />
+            <AlertDescription className="font-medium text-center py-2">
+              Your data/ID won't be stored permanently.
+            </AlertDescription>
+          </Alert>
+        )}
+        
         {!isRealTimeScanMode && (
           <Alert className="mb-4 bg-muted/30 border-muted">
             <AlertCircle className="h-4 w-4" />
             <AlertDescription className="text-sm">
-              For demo purposes, try ID "1234" to see a breach result.
+              For demo purposes, try ID "A1234567" to see a breach result.
             </AlertDescription>
           </Alert>
         )}
@@ -321,13 +331,12 @@ const GovernmentIDSection = () => {
                   <SelectItem value="passport">Passport Number</SelectItem>
                   <SelectItem value="drivingLicense">Driver's License Number</SelectItem>
                   <SelectItem value="voterID">Voter ID</SelectItem>
-                  <SelectItem value="ssn">Social Security Number (US)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="idValue">ID Number (Last 4 digits only)</Label>
+              <Label htmlFor="idValue">Enter Full ID Number</Label>
               <div className="relative">
                 <div className="absolute left-3 top-3 text-muted-foreground">
                   <Lock className="h-5 w-5" />
@@ -341,14 +350,14 @@ const GovernmentIDSection = () => {
                     setValidationError('');
                   }}
                   placeholder={getIdPlaceholder(idType)}
-                  maxLength={4}
+                  type="text"
                 />
               </div>
               {validationError ? (
                 <p className="text-xs text-red-500 mt-1">{validationError}</p>
               ) : (
                 <p className="text-xs text-muted-foreground mt-1">
-                  We only need the last 4 digits for secure scanning
+                  All ID information is encrypted before scanning
                 </p>
               )}
             </div>
