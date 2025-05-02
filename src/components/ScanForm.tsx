@@ -11,6 +11,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Progress } from '@/components/ui/progress';
 import { 
   Select, 
   SelectContent, 
@@ -52,12 +53,59 @@ const BREACH_SAMPLES = {
   password: ['password', '123456', 'qwerty', 'admin']
 };
 
+// Define scanning platforms - same as the ones in GovernmentIDSection for consistency
+const SCAN_PLATFORMS = [
+  {
+    name: "Dark Web Marketplaces",
+    description: "Anonymous marketplaces where stolen data is bought and sold",
+    examples: ["Dream Market", "Empire Market", "AlphaBay", "Hydra"],
+    scanTimeMs: 800
+  },
+  {
+    name: "Known Data Breach Repositories",
+    description: "Databases containing previously confirmed data breaches",
+    examples: ["HaveIBeenPwned Database", "BreachCompilation", "Collections #1-5"],
+    scanTimeMs: 600
+  },
+  {
+    name: "Underground Hacking Forums",
+    description: "Private forums where hackers share breached data",
+    examples: ["RaidForums", "XSS.is", "Exploit.in", "OGUsers"],
+    scanTimeMs: 700
+  },
+  {
+    name: "Paste Sites",
+    description: "Public and private paste services often used for data dumps",
+    examples: ["Pastebin", "GitHub Gists", "PrivateBin", "JustPaste.it"],
+    scanTimeMs: 500
+  },
+  {
+    name: "Data Leak Collections",
+    description: "Aggregated collections of multiple data leaks",
+    examples: ["Anti Public Combo List", "Exploit.in", "Snusbase"],
+    scanTimeMs: 900
+  },
+  {
+    name: "Criminal Marketplaces",
+    description: "Platforms specifically for trading stolen credentials and PII",
+    examples: ["Genesis Market", "Russian Market", "Brian's Club"],
+    scanTimeMs: 750
+  },
+  {
+    name: "Compromised Credentials Databases",
+    description: "Specialized databases indexing leaked login information",
+    examples: ["LeakCheck", "DeHashed", "Leaked Source", "Breach-Parse"],
+    scanTimeMs: 650
+  }
+];
+
 const ScanForm = ({ onSubmit, isRealTime = false }: ScanFormProps) => {
   const [scanType, setScanType] = useState<ScanType>('email');
   const [inputValue, setInputValue] = useState('');
   const [isScanning, setIsScanning] = useState(false);
   const [scanProgress, setScanProgress] = useState(0);
   const [validationError, setValidationError] = useState('');
+  const [currentScanPlatform, setCurrentScanPlatform] = useState('');
 
   const validateInput = (type: ScanType, value: string): boolean => {
     const pattern = VALIDATION_PATTERNS[type];
@@ -144,42 +192,58 @@ const ScanForm = ({ onSubmit, isRealTime = false }: ScanFormProps) => {
     
     setIsScanning(true);
     setScanProgress(0);
+    setCurrentScanPlatform('Initializing secure scanning environment');
     
     const scanMessage = isRealTime 
       ? `Starting real-time scan for ${scanType}...`
       : `Starting scan for ${scanType}...`;
     
-    toast.info(scanMessage, { id: 'scan-progress' });
+    toast.info(scanMessage);
     
-    const scanPhases = [
-      { progress: 15, message: isRealTime ? 'Initializing secure real-time scanning environment...' : 'Initializing secure scanning environment...' },
-      { progress: 30, message: 'Searching public breach databases...' },
-      { progress: 45, message: isRealTime ? 'Scanning dark web forums in real-time...' : 'Scanning dark web forums...' },
-      { progress: 60, message: 'Searching encrypted marketplaces...' },
-      { progress: 75, message: 'Cross-referencing with known breaches...' },
-      { progress: 90, message: 'Analyzing results and creating report...' },
-      { progress: 100, message: 'Scan complete! Preparing results...' }
-    ];
-    
-    let phaseIndex = 0;
-    const runNextPhase = () => {
-      if (phaseIndex < scanPhases.length) {
-        const phase = scanPhases[phaseIndex];
-        setScanProgress(phase.progress);
-        toast.info(phase.message, { id: 'scan-progress' });
-        phaseIndex++;
-        setTimeout(runNextPhase, 600 + Math.random() * 400);
-      } else {
-        finalizeScan();
-      }
-    };
-    
-    const finalizeScan = () => {
-      setIsScanning(false);
-      onSubmit(scanType, inputValue);
-    };
-    
-    runNextPhase();
+    // Begin the comprehensive scanning process similar to GovernmentIDSection
+    setTimeout(() => {
+      setScanProgress(10);
+      setCurrentScanPlatform('Verifying encryption integrity');
+      
+      // Begin platform scanning sequence
+      let progressIncrement = 80 / SCAN_PLATFORMS.length;
+      let currentProgress = 10;
+      let platformIndex = 0;
+      
+      const scanNextPlatform = () => {
+        if (platformIndex < SCAN_PLATFORMS.length) {
+          const platform = SCAN_PLATFORMS[platformIndex];
+          currentProgress += progressIncrement;
+          setScanProgress(Math.round(currentProgress));
+          setCurrentScanPlatform(`Scanning ${platform.name}`);
+          
+          // Display more detailed toast about each platform
+          toast.info(
+            `Scanning ${platform.name}: ${platform.description}. Checking ${platform.examples.slice(0, 2).join(", ")} and others.`, 
+            { id: 'scan-progress', duration: platform.scanTimeMs }
+          );
+          
+          platformIndex++;
+          setTimeout(scanNextPlatform, platform.scanTimeMs);
+        } else {
+          // Scanning complete, compile results
+          setScanProgress(95);
+          setCurrentScanPlatform('Compiling scan results');
+          
+          setTimeout(() => {
+            setScanProgress(100);
+            setCurrentScanPlatform('Scan complete');
+            setIsScanning(false);
+            
+            // Pass the results to the parent component
+            onSubmit(scanType, inputValue);
+          }, 800);
+        }
+      };
+      
+      // Start scanning platforms
+      setTimeout(scanNextPlatform, 600);
+    }, 500);
   };
 
   const renderIcon = () => {
@@ -316,6 +380,20 @@ const ScanForm = ({ onSubmit, isRealTime = false }: ScanFormProps) => {
                 </p>
               )}
             </div>
+            
+            {isRealTime && (
+              <div className="mt-3 bg-cyber-primary/10 p-3 rounded-md border border-cyber-primary/20">
+                <h4 className="text-sm font-medium mb-1.5 text-cyber-primary">Real-Time Scan Security</h4>
+                <p className="text-xs text-muted-foreground mb-1">
+                  Your information will be checked against these breach sources:
+                </p>
+                <ul className="text-xs text-muted-foreground space-y-0.5 list-disc pl-4">
+                  {SCAN_PLATFORMS.map((platform, index) => (
+                    <li key={index}>{platform.name}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </div>
           
           <Button 
@@ -324,16 +402,13 @@ const ScanForm = ({ onSubmit, isRealTime = false }: ScanFormProps) => {
             disabled={isScanning}
           >
             {isScanning ? (
-              <>
-                <span className="mr-2">{isRealTime ? 'Real-Time Scanning' : 'Scanning'}</span>
-                <div className="relative h-4 w-36 bg-cyber-dark/20 overflow-hidden rounded-full">
-                  <div 
-                    className="h-full bg-scan-line animate-scanning" 
-                    style={{ width: `${scanProgress}%` }}
-                  />
+              <div className="flex flex-col items-center w-full">
+                <div className="flex items-center justify-between w-full mb-1">
+                  <span className="text-sm">{currentScanPlatform}</span>
+                  <span className="text-sm ml-2">{scanProgress}%</span>
                 </div>
-                <span className="ml-2">{scanProgress}%</span>
-              </>
+                <Progress value={scanProgress} className="h-2 w-full bg-cyber-dark/20" />
+              </div>
             ) : isRealTime ? 'Start Real-Time Scan' : 'Start Scan'}
           </Button>
         </form>

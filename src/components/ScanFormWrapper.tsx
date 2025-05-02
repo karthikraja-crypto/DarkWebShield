@@ -32,108 +32,87 @@ const ScanFormWrapper = () => {
   }, [isRealTimeScanMode]);
   
   const handleScanSubmit = (type: string, value: string) => {
-    if (isRealTimeScan) {
-      toast.info(`Performing real-time scan for ${type.toLowerCase()}: ${value}...`);
-    } else {
-      toast.info(`Scanning for ${type.toLowerCase()}: ${value}...`);
+    // This function is now only called after the scanning animation is complete
+    // Let's create breach data if the value is in our mock database
+    let isCompromised = false;
+    
+    if (type === 'Email' && MOCK_BREACH_DATABASE.emails.includes(value)) {
+      isCompromised = true;
+    } else if (type === 'Phone' && MOCK_BREACH_DATABASE.phones.includes(value)) {
+      isCompromised = true;
+    } else if (type === 'Username' && MOCK_BREACH_DATABASE.usernames.includes(value)) {
+      isCompromised = true;
     }
     
-    // Simulate a scanning process
-    setTimeout(() => {
-      // For real-time scans use a different approach or API
-      // In this demo, we're just using a slightly different method to check the same mock database
-      let isCompromised = false;
-      if (isRealTimeScan) {
-        // Real-time scan logic would connect to a real API here
-        // For the demo, we'll use the same mock database but with different messaging
-        if (type === 'Email' && MOCK_BREACH_DATABASE.emails.includes(value)) {
-          isCompromised = true;
-        } else if (type === 'Phone' && MOCK_BREACH_DATABASE.phones.includes(value)) {
-          isCompromised = true;
-        } else if (type === 'Username' && MOCK_BREACH_DATABASE.usernames.includes(value)) {
-          isCompromised = true;
-        }
-      } else {
-        // Sample data scan logic - same as before
-        if (type === 'Email' && MOCK_BREACH_DATABASE.emails.includes(value)) {
-          isCompromised = true;
-        } else if (type === 'Phone' && MOCK_BREACH_DATABASE.phones.includes(value)) {
-          isCompromised = true;
-        } else if (type === 'Username' && MOCK_BREACH_DATABASE.usernames.includes(value)) {
-          isCompromised = true;
-        }
-      }
-      
-      // Create breach data if compromised
-      const breaches: BreachData[] = [];
-      if (isCompromised) {
-        // Create breach records based on type
-        if (type === 'Email') {
-          breaches.push({
-            id: `email-breach-${Date.now()}`,
-            title: isRealTimeScan ? 'Real-Time Email Compromise Detected' : 'Email Compromise Detected',
-            domain: 'multiple-sources.com',
-            breachDate: new Date(Date.now() - 15552000000).toISOString(), // ~6 months ago
-            affectedData: ['Email', 'Password', 'Personal Information'],
-            riskLevel: 'high',
-            verified: true,
-            description: `Your email address "${value}" was found in a data breach affecting multiple services. This breach exposed passwords and personal information.`
-          });
-          
-          // Add a second breach for more realistic data
-          breaches.push({
-            id: `email-breach-${Date.now() + 1}`,
-            title: isRealTimeScan ? 'Real-Time Social Media Breach' : 'Social Media Breach',
-            domain: 'socialmedia.com',
-            breachDate: new Date(Date.now() - 31104000000).toISOString(), // ~12 months ago
-            affectedData: ['Email', 'Username', 'IP Address'],
-            riskLevel: 'medium',
-            verified: true,
-            description: `Your email address was also found in a social media platform breach that exposed user account information and IP addresses.`
-          });
-        } else if (type === 'Phone') {
-          breaches.push({
-            id: `phone-breach-${Date.now()}`,
-            title: isRealTimeScan ? 'Real-Time Telecom Data Breach' : 'Telecom Data Breach',
-            domain: 'telecom-provider.com',
-            breachDate: new Date(Date.now() - 7776000000).toISOString(), // ~3 months ago
-            affectedData: ['Phone Number', 'Call Records', 'Account Details'],
-            riskLevel: 'medium',
-            verified: true,
-            description: `Your phone number was found in a telecommunications provider data breach that exposed customer records and call history.`
-          });
-        } else if (type === 'Username') {
-          breaches.push({
-            id: `username-breach-${Date.now()}`,
-            title: isRealTimeScan ? 'Real-Time Gaming Platform Breach' : 'Gaming Platform Breach',
-            domain: 'gaming-platform.com',
-            breachDate: new Date(Date.now() - 5184000000).toISOString(), // ~2 months ago
-            affectedData: ['Username', 'Email', 'Hashed Password'],
-            riskLevel: 'medium',
-            verified: true,
-            description: `Your username "${value}" was exposed in a gaming platform breach that affected millions of accounts.`
-          });
-        }
+    // Create breach data if compromised
+    const breaches: BreachData[] = [];
+    if (isCompromised) {
+      // Create breach records based on type
+      if (type === 'Email') {
+        breaches.push({
+          id: `email-breach-${Date.now()}`,
+          title: isRealTimeScan ? 'Real-Time Email Compromise Detected' : 'Email Compromise Detected',
+          domain: 'multiple-sources.com',
+          breachDate: new Date(Date.now() - 15552000000).toISOString(), // ~6 months ago
+          affectedData: ['Email', 'Password', 'Personal Information'],
+          riskLevel: 'high',
+          verified: true,
+          description: `Your email address "${value}" was found in a data breach affecting multiple services. This breach exposed passwords and personal information.`
+        });
         
-        const alertMessage = isRealTimeScan 
-          ? `Alert: Real-time scan found your ${type.toLowerCase()} in a data breach!` 
-          : `Alert: Your ${type.toLowerCase()} was found in a data breach!`;
-          
-        toast.error(alertMessage, { duration: 5000 });
-      } else {
-        const successMessage = isRealTimeScan
-          ? `✅ No breaches found. You're safe!`
-          : `No breaches found for your ${type.toLowerCase()}`;
-          
-        toast.success(successMessage);
+        // Add a second breach for more realistic data
+        breaches.push({
+          id: `email-breach-${Date.now() + 1}`,
+          title: isRealTimeScan ? 'Real-Time Social Media Breach' : 'Social Media Breach',
+          domain: 'socialmedia.com',
+          breachDate: new Date(Date.now() - 31104000000).toISOString(), // ~12 months ago
+          affectedData: ['Email', 'Username', 'IP Address'],
+          riskLevel: 'medium',
+          verified: true,
+          description: `Your email address was also found in a social media platform breach that exposed user account information and IP addresses.`
+        });
+      } else if (type === 'Phone') {
+        breaches.push({
+          id: `phone-breach-${Date.now()}`,
+          title: isRealTimeScan ? 'Real-Time Telecom Data Breach' : 'Telecom Data Breach',
+          domain: 'telecom-provider.com',
+          breachDate: new Date(Date.now() - 7776000000).toISOString(), // ~3 months ago
+          affectedData: ['Phone Number', 'Call Records', 'Account Details'],
+          riskLevel: 'medium',
+          verified: true,
+          description: `Your phone number was found in a telecommunications provider data breach that exposed customer records and call history.`
+        });
+      } else if (type === 'Username') {
+        breaches.push({
+          id: `username-breach-${Date.now()}`,
+          title: isRealTimeScan ? 'Real-Time Gaming Platform Breach' : 'Gaming Platform Breach',
+          domain: 'gaming-platform.com',
+          breachDate: new Date(Date.now() - 5184000000).toISOString(), // ~2 months ago
+          affectedData: ['Username', 'Email', 'Hashed Password'],
+          riskLevel: 'medium',
+          verified: true,
+          description: `Your username "${value}" was exposed in a gaming platform breach that affected millions of accounts.`
+        });
       }
       
-      // Add the scan to our context with proper flag for real vs sample data
-      addRealScan(type, value, breaches, isRealTimeScan);
-      
-      // Navigate to results
-      navigate('/results');
-    }, 2000);
+      const alertMessage = isRealTimeScan 
+        ? `Alert: Real-time scan found your ${type.toLowerCase()} in a data breach!` 
+        : `Alert: Your ${type.toLowerCase()} was found in a data breach!`;
+        
+      toast.error(alertMessage, { duration: 5000 });
+    } else {
+      const successMessage = isRealTimeScan
+        ? `✅ No breaches found. You're safe!`
+        : `No breaches found for your ${type.toLowerCase()}`;
+        
+      toast.success(successMessage);
+    }
+    
+    // Add the scan to our context with proper flag for real vs sample data
+    addRealScan(type, value, breaches, isRealTimeScan);
+    
+    // Navigate to results
+    navigate('/results');
   };
 
   const toggleRealTimeScan = () => {
