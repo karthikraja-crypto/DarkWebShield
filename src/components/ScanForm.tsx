@@ -24,7 +24,7 @@ import { toast } from 'sonner';
 import { Mail, Phone, User, CreditCard, Building, AlertTriangle, Network, BadgeAlert } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
-type ScanType = 'email' | 'phone' | 'username' | 'creditCard' | 'bankAccount' | 'idNumber' | 'ipAddress' | 'physicalAddress' | 'password';
+type ScanType = 'email' | 'phone' | 'username' | 'creditCard' | 'bankAccount' | 'ipAddress' | 'physicalAddress' | 'password';
 
 interface ScanFormProps {
   onSubmit: (type: string, value: string) => void;
@@ -33,11 +33,10 @@ interface ScanFormProps {
 
 const VALIDATION_PATTERNS = {
   email: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-  phone: /^(\+91|0)[1-9]\d{9}$/, // Updated to only allow Indian phone numbers
+  phone: /^(\+91|0)[1-9]\d{9}$/, // Indian phone numbers
   username: /^[a-zA-Z0-9_]{3,20}$/,
-  creditCard: /^\d{4}$/,
-  bankAccount: /^\d{6}$/,
-  idNumber: /^\d{4}$/,
+  creditCard: /^\d{13,19}$/, // Most credit cards are 13-19 digits
+  bankAccount: /^\d{9,18}$/, // Most bank accounts are 9-18 digits
   ipAddress: /^(\d{1,3}\.){3}\d{1,3}$/,
   physicalAddress: /.{5,}/,
   password: /.{1,}/
@@ -47,9 +46,8 @@ const BREACH_SAMPLES = {
   email: ['test@example.com', 'admin@company.com', 'john.doe@gmail.com', 'info@business.org'],
   phone: ['1234567890', '555-123-4567', '8885551234'],
   username: ['admin', 'user1234', 'johndoe', 'testuser'],
-  creditCard: ['1234', '5678', '9012', '3456'],
-  bankAccount: ['123456', '789012', '345678'],
-  idNumber: ['1234', '5678', '9012'],
+  creditCard: ['4532015112830366', '4916338506082832', '5280934283171080'],
+  bankAccount: ['123456789012', '345678901234', '567890123456'],
   ipAddress: ['192.168.1.1', '10.0.0.1', '172.16.0.1'],
   physicalAddress: ['123 Main St', '456 Oak Avenue', '789 Pine Boulevard'],
   password: ['password', '123456', 'qwerty', 'admin']
@@ -187,14 +185,21 @@ const ScanForm = ({ onSubmit, isRealTime = false }: ScanFormProps) => {
       return;
     }
     
-    // Special validation for phone numbers - must be Indian format
-    if (scanType === 'phone' && !validateInput(scanType, inputValue)) {
-      toast.error('Invalid phone number format');
-      setValidationError('Please enter a valid Indian phone number starting with +91 or 0, followed by 10 digits');
-      return;
-    } else if (!validateInput(scanType, inputValue)) {
-      toast.error(`Invalid format for ${scanType}`);
-      setValidationError(`Please enter a valid ${scanType} format`);
+    // Validate input format based on type
+    if (!validateInput(scanType, inputValue)) {
+      if (scanType === 'phone') {
+        toast.error('Invalid phone number format');
+        setValidationError('Please enter a valid Indian phone number starting with +91 or 0, followed by 10 digits');
+      } else if (scanType === 'creditCard') {
+        toast.error('Invalid credit card format');
+        setValidationError('Please enter a valid credit card number (13-19 digits)');
+      } else if (scanType === 'bankAccount') {
+        toast.error('Invalid bank account format');
+        setValidationError('Please enter a valid bank account number (9-18 digits)');
+      } else {
+        toast.error(`Invalid format for ${scanType}`);
+        setValidationError(`Please enter a valid ${scanType} format`);
+      }
       return;
     }
     
@@ -272,8 +277,6 @@ const ScanForm = ({ onSubmit, isRealTime = false }: ScanFormProps) => {
       case 'creditCard':
       case 'bankAccount':
         return <CreditCard className="h-5 w-5" />;
-      case 'idNumber':
-        return <BadgeAlert className="h-5 w-5" />;  
       case 'ipAddress':
         return <Network className="h-5 w-5" />;
       case 'physicalAddress':
@@ -294,11 +297,9 @@ const ScanForm = ({ onSubmit, isRealTime = false }: ScanFormProps) => {
       case 'username':
         return 'Enter your username';
       case 'creditCard':
-        return 'Enter last 4 digits of your credit card';
+        return 'Enter your full credit card number';
       case 'bankAccount':
-        return 'Enter last 6 digits of your bank account';
-      case 'idNumber':
-        return 'Enter last 4 digits of your ID number';
+        return 'Enter your full bank account number';
       case 'ipAddress':
         return 'Enter an IP address (e.g., 192.168.1.1)';
       case 'physicalAddress':
@@ -316,7 +317,6 @@ const ScanForm = ({ onSubmit, isRealTime = false }: ScanFormProps) => {
         return 'tel';
       case 'creditCard':
       case 'bankAccount':
-      case 'idNumber':
         return 'number';
       case 'password':
         return 'password';
@@ -367,9 +367,8 @@ const ScanForm = ({ onSubmit, isRealTime = false }: ScanFormProps) => {
                   <SelectItem value="email">Email Address</SelectItem>
                   <SelectItem value="phone">Phone Number (Indian)</SelectItem>
                   <SelectItem value="username">Username</SelectItem>
-                  <SelectItem value="creditCard">Credit Card (last 4 digits)</SelectItem>
-                  <SelectItem value="bankAccount">Bank Account (last 6 digits)</SelectItem>
-                  <SelectItem value="idNumber">ID Number (last 4 digits)</SelectItem>
+                  <SelectItem value="creditCard">Credit Card Number</SelectItem>
+                  <SelectItem value="bankAccount">Bank Account Number</SelectItem>
                   <SelectItem value="ipAddress">IP Address</SelectItem>
                   <SelectItem value="physicalAddress">Physical Address</SelectItem>
                   <SelectItem value="password">Password</SelectItem>
@@ -393,7 +392,6 @@ const ScanForm = ({ onSubmit, isRealTime = false }: ScanFormProps) => {
                     setValidationError('');
                   }}
                   placeholder={getPlaceholder()}
-                  maxLength={scanType === 'bankAccount' ? 6 : (scanType === 'creditCard' || scanType === 'idNumber' ? 4 : undefined)}
                 />
               </div>
               {validationError ? (
@@ -401,6 +399,14 @@ const ScanForm = ({ onSubmit, isRealTime = false }: ScanFormProps) => {
               ) : scanType === 'phone' ? (
                 <p className="text-xs text-muted-foreground mt-1">
                   Only Indian phone numbers (+91 or 0 followed by 10 digits) are supported.
+                </p>
+              ) : scanType === 'creditCard' ? (
+                <p className="text-xs text-muted-foreground mt-1">
+                  Enter full card number (13-19 digits). Your data is encrypted and secure.
+                </p>
+              ) : scanType === 'bankAccount' ? (
+                <p className="text-xs text-muted-foreground mt-1">
+                  Enter full account number (9-18 digits). Your data is encrypted and secure.
                 </p>
               ) : (
                 <p className="text-xs text-muted-foreground mt-1">
