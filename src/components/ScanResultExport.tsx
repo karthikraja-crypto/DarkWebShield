@@ -6,7 +6,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { Button } from '@/components/ui/button';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Switch } from '@/components/ui/switch';
-import { bell, bellOff } from 'lucide-react';
+import { Bell, BellOff } from 'lucide-react';
 import { toast } from 'sonner';
 import { useScan } from '@/contexts/ScanContext';
 
