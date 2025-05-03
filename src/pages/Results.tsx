@@ -116,6 +116,18 @@ const Results = () => {
     }, 1000);
   };
 
+  // Calculate risk factor based on security score and breaches
+  const calculateRiskFactor = (): 'high' | 'medium' | 'low' => {
+    // Check for high risk breaches first
+    const hasHighRiskBreach = breaches.some(breach => breach.riskLevel === 'high');
+    if (hasHighRiskBreach) return 'high';
+    
+    // Then calculate based on security score
+    if (securityScore < 40) return 'high';
+    if (securityScore < 75) return 'medium';
+    return 'low';
+  };
+
   // Security tips to show when no breaches are found
   const securityTips = [
     "Use strong, unique passwords for each account",
@@ -251,7 +263,7 @@ const Results = () => {
                 score={securityScore} 
                 breachCount={breaches.length}
                 lastScanDate={getLastScanDate()}
-                riskFactor={breaches.length > 0 ? 'high' : 'low'}
+                riskFactor={calculateRiskFactor()}
               />
               <RecommendationsList recommendations={recommendations} />
               

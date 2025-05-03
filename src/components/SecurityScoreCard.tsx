@@ -62,20 +62,37 @@ const SecurityScoreCard: React.FC<SecurityScoreProps> = ({
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="text-center">
-          <div className="relative mx-auto w-32 h-32 mb-4">
-            <div className="absolute inset-0 rounded-full border-4 border-cyber-primary/20"></div>
-            <div 
-              className="absolute inset-0 rounded-full border-4 border-transparent border-t-cyber-primary"
-              style={{ 
-                transform: `rotate(${score * 3.6}deg)`,
-                transition: 'transform 1s cubic-bezier(0.4, 0, 0.2, 1)'
-              }}
-            ></div>
-            <div className="absolute inset-0 flex items-center justify-center flex-col">
-              <span className={`text-4xl font-bold ${getScoreColor()}`}>{score}</span>
-              <span className="text-sm text-muted-foreground">{getScoreDescription()}</span>
-            </div>
-          </div>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="relative mx-auto w-32 h-32 mb-4 cursor-help">
+                  <div className="absolute inset-0 rounded-full border-4 border-cyber-primary/20"></div>
+                  <div 
+                    className="absolute inset-0 rounded-full border-4 border-transparent border-t-cyber-primary"
+                    style={{ 
+                      transform: `rotate(${score * 3.6}deg)`,
+                      transition: 'transform 1s cubic-bezier(0.4, 0, 0.2, 1)'
+                    }}
+                  ></div>
+                  <div className="absolute inset-0 flex items-center justify-center flex-col">
+                    <span className={`text-4xl font-bold ${getScoreColor()}`}>{score}</span>
+                    <span className="text-sm text-muted-foreground">{getScoreDescription()}</span>
+                  </div>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent className="max-w-[250px] p-3">
+                <p className="text-sm">
+                  Security Score is calculated based on:
+                </p>
+                <ul className="text-xs list-disc pl-4 mt-1 space-y-1">
+                  <li>Number of detected breaches</li>
+                  <li>Risk level of each breach (High/Medium/Low)</li>
+                  <li>Sensitivity of exposed data types</li>
+                  <li>Age and relevance of breaches</li>
+                </ul>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
           
           <div className="w-full space-y-1">
             <div className="flex justify-between text-xs">

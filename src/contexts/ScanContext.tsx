@@ -331,29 +331,80 @@ export const ScanProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     return value;
   };
 
-  // Calculate security score based on breaches
+  // Updated security score calculation based on breaches
   const calculateSecurityScore = (breaches: BreachData[]): number => {
-    const baseScore = 100;
-    const highRiskPenalty = 15;
-    const mediumRiskPenalty = 10;
-    const lowRiskPenalty = 5;
+    if (breaches.length === 0) {
+      return 95; // Excellent score when no breaches found
+    }
     
+    const baseScore = 100;
+    
+    // Define penalties based on risk levels
+    const riskPenalties = {
+      high: 30,     // Severe penalty for high risk breaches
+      medium: 15,   // Moderate penalty for medium risk breaches
+      low: 5        // Small penalty for low risk breaches
+    };
+    
+    // Define additional penalties for sensitive data types
+    const sensitiveDataPenalties: Record<string, number> = {
+      'Credit Cards': 10,
+      'Password': 8,
+      'Passwords': 8,
+      'SSN': 15,
+      'Banking Info': 12,
+      'Government ID': 15,
+      'Health Records': 10,
+      'Biometric Data': 12,
+      'Financial': 10
+    };
+    
+    // Calculate total penalty starting with base penalties for each breach
     let totalPenalty = 0;
+    let hasHighRiskBreach = false;
+    
     breaches.forEach(breach => {
+      // Apply risk level penalty
       switch (breach.riskLevel) {
         case 'high':
-          totalPenalty += highRiskPenalty;
+          totalPenalty += riskPenalties.high;
+          hasHighRiskBreach = true;
           break;
         case 'medium':
-          totalPenalty += mediumRiskPenalty;
+          totalPenalty += riskPenalties.medium;
           break;
         case 'low':
-          totalPenalty += lowRiskPenalty;
+        default:
+          totalPenalty += riskPenalties.low;
           break;
+      }
+      
+      // Apply additional penalties for sensitive data types
+      breach.affectedData.forEach(dataType => {
+        if (sensitiveDataPenalties[dataType]) {
+          totalPenalty += sensitiveDataPenalties[dataType];
+        }
+      });
+      
+      // For older breaches (> 1 year), reduce penalty slightly
+      const breachDate = new Date(breach.breachDate);
+      const oneYearAgo = new Date();
+      oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+      
+      if (breachDate < oneYearAgo) {
+        totalPenalty *= 0.9; // 10% reduction for older breaches
       }
     });
     
-    return Math.max(0, Math.min(100, baseScore - totalPenalty));
+    // Ensure high-risk breaches always result in a low score (below 40)
+    if (hasHighRiskBreach) {
+      return Math.min(40, Math.max(5, baseScore - totalPenalty));
+    }
+    
+    // Calculate final score
+    const finalScore = Math.max(5, Math.min(95, baseScore - totalPenalty));
+    
+    return Math.round(finalScore);
   };
 
   // Generate recommendations based on breaches

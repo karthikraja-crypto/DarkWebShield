@@ -1,4 +1,3 @@
-
 import React from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -34,10 +33,15 @@ const Dashboard: React.FC = () => {
     navigate('/notifications');
   };
 
-  // Calculate risk factor based on security score
+  // Calculate risk factor based on security score and breaches
   const calculateRiskFactor = (): 'high' | 'medium' | 'low' => {
-    if (securityScore < 50) return 'high';
-    if (securityScore < 80) return 'medium';
+    // Check for high risk breaches first
+    const hasHighRiskBreach = breaches.some(breach => breach.riskLevel === 'high');
+    if (hasHighRiskBreach) return 'high';
+    
+    // Then calculate based on security score
+    if (securityScore < 40) return 'high';
+    if (securityScore < 75) return 'medium';
     return 'low';
   };
 
