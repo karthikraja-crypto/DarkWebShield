@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
@@ -13,6 +12,7 @@ import ScanResultExport from '@/components/ScanResultExport';
 import { exportOverallReport } from '@/utils/exportUtils';
 import { toast } from 'sonner';
 import { useScan } from '@/contexts/ScanContext';
+import { Switch } from '@/components/ui/switch';
 
 const Results = () => {
   const location = useLocation();
@@ -25,8 +25,16 @@ const Results = () => {
     securityScore,
     getLastScanDate,
     isRealTimeScanMode,
-    getLastScanInfo
+    getLastScanInfo,
+    toggleMonitoring,
+    isIdMonitored
   } = useScan();
+
+  // Get the last scan type and value
+  const { scanType, scanValue } = getLastScanInfo();
+  const [isMonitoring, setIsMonitoring] = useState<boolean>(
+    scanValue ? isIdMonitored(scanType, scanValue) : false
+  );
 
   useEffect(() => {
     // Simulate loading
@@ -37,8 +45,22 @@ const Results = () => {
     return () => clearTimeout(timer);
   }, [location]);
   
-  // Get the last scan type and value
-  const { scanType, scanValue } = getLastScanInfo();
+  const handleToggleMonitoring = () => {
+    const newState = !isMonitoring;
+    setIsMonitoring(newState);
+    
+    // Call context method to toggle monitoring
+    if (scanType && scanValue) {
+      toggleMonitoring(scanType, scanValue, newState);
+      
+      // Show appropriate toast message
+      if (newState) {
+        toast.success(`Continuous Monitoring enabled for ${scanType}`);
+      } else {
+        toast.info(`Monitoring stopped for ${scanType}`);
+      }
+    }
+  };
 
   // Get the most recent scan from history
   const getLastScanType = () => {
@@ -232,6 +254,44 @@ const Results = () => {
                 riskFactor={breaches.length > 0 ? 'high' : 'low'}
               />
               <RecommendationsList recommendations={recommendations} />
+              
+              {/* Continuous Monitoring Toggle - Now here between recommendations and export */}
+              {scanType && scanValue && (
+                <Card className="cyber-card">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-lg">
+                      <span>🔁 Continuous Monitoring</span>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex justify-between items-center mb-4">
+                      <div>
+                        <p className="font-medium text-sm">
+                          {isMonitoring ? 'Active Monitoring' : 'Monitoring Disabled'}
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          For {scanType}: {scanValue.replace(/^(.{3}).*(.{3})$/, '$1***$2')}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-muted-foreground">
+                          {isMonitoring ? "ON" : "OFF"}
+                        </span>
+                        <Switch
+                          checked={isMonitoring}
+                          onCheckedChange={handleToggleMonitoring}
+                          className={isMonitoring ? "bg-cyber-primary" : ""}
+                        />
+                      </div>
+                    </div>
+                    
+                    {/* Description Text */}
+                    <p className="text-xs text-muted-foreground bg-cyber-dark/10 p-3 rounded-md border border-cyber-primary/10">
+                      Enable continuous monitoring to track this ID for future breaches. You'll be instantly notified of any new breach activity detected in real time.
+                    </p>
+                  </CardContent>
+                </Card>
+              )}
               
               {/* Update ScanResultExport with proper data and scan info */}
               <ScanResultExport 

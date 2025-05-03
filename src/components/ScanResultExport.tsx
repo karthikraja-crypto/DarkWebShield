@@ -65,31 +65,7 @@ const ScanResultExport = ({
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          {/* Continuous Monitoring Button */}
-          {scanType && scanValue && (
-            <div className="bg-cyber-dark/10 p-4 rounded-md border border-cyber-primary/20 mb-4">
-              <div className="flex justify-between items-center">
-                <div>
-                  <h3 className="text-sm font-medium">🔁 Continuous Monitoring</h3>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {isMonitoring 
-                      ? `Actively monitoring ${scanType}: ${scanValue.replace(/^(.{3}).*(.{3})$/, '$1***$2')}`
-                      : `Enable monitoring for ${scanType}`}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-muted-foreground">
-                    {isMonitoring ? "Enabled" : "Disabled"}
-                  </span>
-                  <Switch
-                    checked={isMonitoring}
-                    onCheckedChange={handleToggleMonitoring}
-                    className={isMonitoring ? "bg-cyber-primary" : ""}
-                  />
-                </div>
-              </div>
-            </div>
-          )}
+          {/* Continuous Monitoring Button - no longer here, moved to Results page */}
           
           <div className="bg-cyber-dark/20 p-4 rounded-md">
             <h3 className="text-sm font-medium mb-2">Comprehensive Report</h3>

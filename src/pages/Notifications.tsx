@@ -1,5 +1,4 @@
-
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
@@ -16,10 +15,15 @@ import {
 } from "@/components/ui/table";
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+
+// Define notification filter types
+type NotificationFilter = 'all' | 'breach' | 'scan' | 'system' | 'custom';
 
 const Notifications = () => {
   const { scanHistory, breaches, isRealTimeScanMode, clearNotification } = useScan();
   const navigate = useNavigate();
+  const [activeFilter, setActiveFilter] = useState<NotificationFilter>('all');
   
   // Clear any new notification alerts when visiting this page
   useEffect(() => {
@@ -33,6 +37,18 @@ const Notifications = () => {
   
   // Get scans with breaches based on mode
   const scansWithBreaches = relevantScans.filter(scan => scan.breachesFound > 0);
+
+  // Filter notifications based on selected category
+  const getFilteredNotifications = () => {
+    if (activeFilter === 'all') return scansWithBreaches;
+    if (activeFilter === 'breach') return scansWithBreaches.filter(scan => scan.breachesFound > 1);
+    if (activeFilter === 'scan') return relevantScans.filter(scan => scan.breachesFound === 0);
+    if (activeFilter === 'system') return relevantScans.filter(scan => scan.isRealScan);
+    if (activeFilter === 'custom') return []; // Custom alerts not implemented yet
+    return scansWithBreaches;
+  };
+  
+  const filteredNotifications = getFilteredNotifications();
   
   return (
     <div className="min-h-screen flex flex-col">
@@ -41,16 +57,40 @@ const Notifications = () => {
       <main className="flex-1 py-16">
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto">
-            <div className="mb-8">
+            <div className="mb-6">
               <div className="flex items-center mb-3">
                 <Bell className="h-5 w-5 mr-2 text-cyber-primary" />
                 <h1 className="text-3xl font-bold">
                   {isRealTimeScanMode ? 'Real-Time Notifications & Alerts' : 'Notifications & Alerts'}
                 </h1>
               </div>
-              <p className="text-lg text-muted-foreground">
+              <p className="text-lg text-muted-foreground mb-6">
                 Stay informed about your digital security with personalized alerts
               </p>
+              
+              {/* Filter Toggle Group */}
+              <Card className="mb-6 p-4">
+                <div className="space-y-2">
+                  <h3 className="text-sm font-medium mb-2">Filter notifications by:</h3>
+                  <ToggleGroup type="single" value={activeFilter} onValueChange={(value) => value && setActiveFilter(value as NotificationFilter)}>
+                    <ToggleGroupItem value="all" aria-label="All notifications">
+                      All
+                    </ToggleGroupItem>
+                    <ToggleGroupItem value="breach" aria-label="Breach alerts">
+                      Breach Alerts
+                    </ToggleGroupItem>
+                    <ToggleGroupItem value="scan" aria-label="Scan reports">
+                      Scan Reports
+                    </ToggleGroupItem>
+                    <ToggleGroupItem value="system" aria-label="System messages">
+                      System Messages
+                    </ToggleGroupItem>
+                    <ToggleGroupItem value="custom" aria-label="Custom alerts">
+                      Custom Alerts
+                    </ToggleGroupItem>
+                  </ToggleGroup>
+                </div>
+              </Card>
             </div>
             
             <div className="space-y-8 mt-6">
@@ -58,21 +98,31 @@ const Notifications = () => {
               <Card className="cyber-card">
                 <CardHeader>
                   <CardTitle className="flex items-center justify-between">
-                    <span>Recent Breach Alerts</span>
-                    {scansWithBreaches.length > 0 && (
+                    <span>
+                      {activeFilter === 'all' ? 'Recent Alerts' : 
+                       activeFilter === 'breach' ? 'Breach Alerts' :
+                       activeFilter === 'scan' ? 'Scan Reports' :
+                       activeFilter === 'system' ? 'System Messages' :
+                       'Custom Alerts'}
+                    </span>
+                    {filteredNotifications.length > 0 && (
                       <Badge variant="destructive">
-                        {scansWithBreaches.length} {scansWithBreaches.length === 1 ? 'Alert' : 'Alerts'}
+                        {filteredNotifications.length} {filteredNotifications.length === 1 ? 'Alert' : 'Alerts'}
                       </Badge>
                     )}
                   </CardTitle>
                   <CardDescription>
-                    Important security notifications about your scanned data
+                    {activeFilter === 'all' ? 'Important security notifications about your scanned data' :
+                     activeFilter === 'breach' ? 'Notifications about detected data breaches' :
+                     activeFilter === 'scan' ? 'Results from your security scans' :
+                     activeFilter === 'system' ? 'System updates and security alerts' :
+                     'Personalized security alerts'}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  {scansWithBreaches.length > 0 ? (
+                  {filteredNotifications.length > 0 ? (
                     <div className="space-y-4">
-                      {scansWithBreaches.slice(0, 5).map((scan) => (
+                      {filteredNotifications.slice(0, 5).map((scan) => (
                         <div key={scan.id} className="flex items-start gap-3 pb-4 border-b border-muted last:border-0 last:pb-0">
                           <div className="bg-red-500/10 p-2 rounded-full">
                             <AlertCircle className="h-4 w-4 text-red-500" />
@@ -108,11 +158,11 @@ const Notifications = () => {
                       <div className="inline-flex items-center justify-center bg-green-500/10 p-3 rounded-full mb-3">
                         <Shield className="h-6 w-6 text-green-500" />
                       </div>
-                      <h3 className="text-lg font-medium mb-1">No breach alerts</h3>
+                      <h3 className="text-lg font-medium mb-1">No {activeFilter !== 'all' ? `${activeFilter} ` : ''}alerts</h3>
                       <p className="text-muted-foreground text-sm">
                         {isRealTimeScanMode 
-                          ? "No breaches detected for your data at this time. We'll keep monitoring for new threats." 
-                          : "You're viewing sample data. Run a scan to check for breaches."
+                          ? `No ${activeFilter !== 'all' ? activeFilter + ' ' : ''}notifications at this time. We'll keep monitoring for new threats.` 
+                          : `You're viewing sample data. Run a scan to check for ${activeFilter !== 'all' ? activeFilter + ' ' : ''}alerts.`
                         }
                       </p>
                     </div>
