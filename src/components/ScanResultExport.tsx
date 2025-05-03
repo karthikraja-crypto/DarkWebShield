@@ -1,13 +1,8 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import ExportButton from './ExportButton';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Button } from '@/components/ui/button';
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
-import { Switch } from '@/components/ui/switch';
-import { Bell, BellOff } from 'lucide-react';
-import { toast } from 'sonner';
 import { useScan } from '@/contexts/ScanContext';
 
 interface ScanResultExportProps {
@@ -27,23 +22,7 @@ const ScanResultExport = ({
   scanValue = '',
   className 
 }: ScanResultExportProps) => {
-  const { toggleMonitoring, isIdMonitored } = useScan();
-  const [isMonitoring, setIsMonitoring] = useState<boolean>(scanValue ? isIdMonitored(scanType, scanValue) : false);
-
-  const handleToggleMonitoring = () => {
-    const newState = !isMonitoring;
-    setIsMonitoring(newState);
-    
-    // Call context method to toggle monitoring
-    toggleMonitoring(scanType, scanValue, newState);
-    
-    // Show appropriate toast message
-    if (newState) {
-      toast.success(`Continuous Monitoring enabled for ${scanType}`);
-    } else {
-      toast.info(`Monitoring stopped for ${scanType}`);
-    }
-  };
+  const { isIdMonitored } = useScan();
 
   return (
     <Card className={`cyber-card ${className || ''}`}>
@@ -65,8 +44,6 @@ const ScanResultExport = ({
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          {/* Continuous Monitoring Button - no longer here, moved to Results page */}
-          
           <div className="bg-cyber-dark/20 p-4 rounded-md">
             <h3 className="text-sm font-medium mb-2">Comprehensive Report</h3>
             <p className="text-sm text-muted-foreground">

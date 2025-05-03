@@ -1,8 +1,9 @@
+
 import React, { useEffect, useState } from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { AlertCircle, Shield, Bell, ShieldAlert } from 'lucide-react';
+import { AlertCircle, Shield, Bell, ShieldAlert, Info } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useScan } from '@/contexts/ScanContext';
 import { 
@@ -18,10 +19,10 @@ import { useNavigate } from 'react-router-dom';
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
 // Define notification filter types
-type NotificationFilter = 'all' | 'breach' | 'scan' | 'system' | 'custom';
+type NotificationFilter = 'all' | 'breach' | 'scan' | 'system' | 'custom' | 'monitoring';
 
 const Notifications = () => {
-  const { scanHistory, breaches, isRealTimeScanMode, clearNotification } = useScan();
+  const { scanHistory, breaches, isRealTimeScanMode, clearNotification, notifications } = useScan();
   const navigate = useNavigate();
   const [activeFilter, setActiveFilter] = useState<NotificationFilter>('all');
   
@@ -40,15 +41,39 @@ const Notifications = () => {
 
   // Filter notifications based on selected category
   const getFilteredNotifications = () => {
+    // If we have actual notifications, use them based on filter
+    if (notifications.length > 0) {
+      if (activeFilter === 'all') return notifications;
+      return notifications.filter(notification => notification.type === activeFilter);
+    }
+    
+    // Legacy fallback (using scan history as notifications)
     if (activeFilter === 'all') return scansWithBreaches;
     if (activeFilter === 'breach') return scansWithBreaches.filter(scan => scan.breachesFound > 1);
     if (activeFilter === 'scan') return relevantScans.filter(scan => scan.breachesFound === 0);
     if (activeFilter === 'system') return relevantScans.filter(scan => scan.isRealScan);
-    if (activeFilter === 'custom') return []; // Custom alerts not implemented yet
+    if (activeFilter === 'monitoring') return [];
+    if (activeFilter === 'custom') return [];
     return scansWithBreaches;
   };
   
   const filteredNotifications = getFilteredNotifications();
+  
+  // Get appropriate icon for notification type
+  const getNotificationIcon = (type: string) => {
+    switch (type) {
+      case 'breach':
+        return <AlertCircle className="h-4 w-4 text-red-500" />;
+      case 'monitoring':
+        return <Bell className="h-4 w-4 text-cyber-primary" />;
+      case 'system':
+        return <ShieldAlert className="h-4 w-4 text-amber-500" />;
+      case 'custom':
+        return <Info className="h-4 w-4 text-blue-500" />;
+      default:
+        return <AlertCircle className="h-4 w-4 text-red-500" />;
+    }
+  };
   
   return (
     <div className="min-h-screen flex flex-col">
@@ -79,6 +104,9 @@ const Notifications = () => {
                     <ToggleGroupItem value="breach" aria-label="Breach alerts">
                       Breach Alerts
                     </ToggleGroupItem>
+                    <ToggleGroupItem value="monitoring" aria-label="Monitoring alerts">
+                      Monitoring Alerts
+                    </ToggleGroupItem>
                     <ToggleGroupItem value="scan" aria-label="Scan reports">
                       Scan Reports
                     </ToggleGroupItem>
@@ -94,13 +122,14 @@ const Notifications = () => {
             </div>
             
             <div className="space-y-8 mt-6">
-              {/* Recent Breach Alerts */}
+              {/* Recent Alerts */}
               <Card className="cyber-card">
                 <CardHeader>
                   <CardTitle className="flex items-center justify-between">
                     <span>
                       {activeFilter === 'all' ? 'Recent Alerts' : 
                        activeFilter === 'breach' ? 'Breach Alerts' :
+                       activeFilter === 'monitoring' ? 'Monitoring Alerts' :
                        activeFilter === 'scan' ? 'Scan Reports' :
                        activeFilter === 'system' ? 'System Messages' :
                        'Custom Alerts'}
@@ -114,6 +143,7 @@ const Notifications = () => {
                   <CardDescription>
                     {activeFilter === 'all' ? 'Important security notifications about your scanned data' :
                      activeFilter === 'breach' ? 'Notifications about detected data breaches' :
+                     activeFilter === 'monitoring' ? 'Updates about your continuously monitored IDs' :
                      activeFilter === 'scan' ? 'Results from your security scans' :
                      activeFilter === 'system' ? 'System updates and security alerts' :
                      'Personalized security alerts'}
@@ -122,36 +152,73 @@ const Notifications = () => {
                 <CardContent>
                   {filteredNotifications.length > 0 ? (
                     <div className="space-y-4">
-                      {filteredNotifications.slice(0, 5).map((scan) => (
-                        <div key={scan.id} className="flex items-start gap-3 pb-4 border-b border-muted last:border-0 last:pb-0">
-                          <div className="bg-red-500/10 p-2 rounded-full">
-                            <AlertCircle className="h-4 w-4 text-red-500" />
-                          </div>
-                          <div className="space-y-1 flex-1">
-                            <div className="flex items-center justify-between">
-                              <h3 className="font-medium">
-                                {isRealTimeScanMode ? 'Your' : (scan.isRealScan ? 'Your' : 'Sample')} {scan.type} was found in {scan.breachesFound} {scan.breachesFound === 1 ? 'breach' : 'breaches'}
-                              </h3>
-                              <span className="text-xs text-muted-foreground">
-                                {new Date(scan.date).toLocaleDateString()}
-                              </span>
+                      {/* Display actual notification objects if available */}
+                      {notifications.length > 0 ? (
+                        /* New notification system display */
+                        filteredNotifications.slice(0, 5).map((notification) => (
+                          <div key={notification.id} className="flex items-start gap-3 pb-4 border-b border-muted last:border-0 last:pb-0">
+                            <div className={`${
+                              notification.severity === 'high' ? 'bg-red-500/10' :
+                              notification.severity === 'medium' ? 'bg-amber-500/10' :
+                              notification.severity === 'low' ? 'bg-yellow-500/10' : 'bg-blue-500/10'
+                            } p-2 rounded-full`}>
+                              {getNotificationIcon(notification.type)}
                             </div>
-                            <p className="text-sm text-muted-foreground">
-                              {isRealTimeScanMode || scan.isRealScan
-                                ? `Your ${scan.type.toLowerCase()} "${scan.value}" appears to be compromised. Immediate action is recommended to secure your accounts.`
-                                : `This is a sample alert showing how a real breach notification would appear for ${scan.type.toLowerCase()} "${scan.value}".`
-                              }
-                            </p>
-                            <Button 
-                              variant="link" 
-                              className="px-0 h-auto py-1 text-cyber-primary" 
-                              onClick={() => navigate('/results')}
-                            >
-                              View Details
-                            </Button>
+                            <div className="space-y-1 flex-1">
+                              <div className="flex items-center justify-between">
+                                <h3 className="font-medium">
+                                  {notification.title}
+                                </h3>
+                                <span className="text-xs text-muted-foreground">
+                                  {new Date(notification.date).toLocaleDateString()}
+                                </span>
+                              </div>
+                              <p className="text-sm text-muted-foreground">
+                                {notification.message}
+                              </p>
+                              <Button 
+                                variant="link" 
+                                className="px-0 h-auto py-1 text-cyber-primary" 
+                                onClick={() => navigate('/results')}
+                              >
+                                View Details
+                              </Button>
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        ))
+                      ) : (
+                        /* Legacy notification display using scan history */
+                        filteredNotifications.slice(0, 5).map((scan) => (
+                          <div key={scan.id} className="flex items-start gap-3 pb-4 border-b border-muted last:border-0 last:pb-0">
+                            <div className="bg-red-500/10 p-2 rounded-full">
+                              <AlertCircle className="h-4 w-4 text-red-500" />
+                            </div>
+                            <div className="space-y-1 flex-1">
+                              <div className="flex items-center justify-between">
+                                <h3 className="font-medium">
+                                  {isRealTimeScanMode ? 'Your' : (scan.isRealScan ? 'Your' : 'Sample')} {scan.type} was found in {scan.breachesFound} {scan.breachesFound === 1 ? 'breach' : 'breaches'}
+                                </h3>
+                                <span className="text-xs text-muted-foreground">
+                                  {new Date(scan.date).toLocaleDateString()}
+                                </span>
+                              </div>
+                              <p className="text-sm text-muted-foreground">
+                                {isRealTimeScanMode || scan.isRealScan
+                                  ? `Your ${scan.type.toLowerCase()} "${scan.value}" appears to be compromised. Immediate action is recommended to secure your accounts.`
+                                  : `This is a sample alert showing how a real breach notification would appear for ${scan.type.toLowerCase()} "${scan.value}".`
+                                }
+                              </p>
+                              <Button 
+                                variant="link" 
+                                className="px-0 h-auto py-1 text-cyber-primary" 
+                                onClick={() => navigate('/results')}
+                              >
+                                View Details
+                              </Button>
+                            </div>
+                          </div>
+                        ))
+                      )}
                     </div>
                   ) : (
                     <div className="text-center py-8">

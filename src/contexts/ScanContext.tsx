@@ -19,6 +19,20 @@ export interface MonitoredId {
   dateAdded: string;
 }
 
+// Define notification types
+export interface NotificationItem {
+  id: string;
+  type: 'breach' | 'scan' | 'system' | 'custom' | 'monitoring';
+  title: string;
+  message: string;
+  date: string;
+  relatedId?: string;
+  relatedType?: string;
+  relatedValue?: string;
+  isRead: boolean;
+  severity: 'low' | 'medium' | 'high' | 'info';
+}
+
 // Sample breach data
 export const sampleBreaches: BreachData[] = [
   {
@@ -112,6 +126,8 @@ interface ScanContextType {
   monitoredIds: MonitoredId[];
   toggleMonitoring: (type: string, value: string, enabled: boolean) => void;
   isIdMonitored: (type: string, value: string) => boolean;
+  notifications: NotificationItem[];
+  addNotification: (notification: Omit<NotificationItem, 'id' | 'date' | 'isRead'>) => void;
 }
 
 // Create context
@@ -131,9 +147,23 @@ export const ScanProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     scanValue: ''
   });
   const [monitoredIds, setMonitoredIds] = useState<MonitoredId[]>([]);
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   
   // This state will control whether we show real scanned data or default to samples
   const [useRealTimeScannedData, setUseRealTimeScannedData] = useState<boolean>(false);
+  
+  // Add a new notification
+  const addNotification = useCallback((notification: Omit<NotificationItem, 'id' | 'date' | 'isRead'>) => {
+    const newNotification: NotificationItem = {
+      ...notification,
+      id: `notif-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      date: new Date().toISOString(),
+      isRead: false,
+    };
+    
+    setNotifications(prev => [newNotification, ...prev]);
+    setHasNewNotification(true);
+  }, []);
   
   // Function to set the global real-time scan mode
   const setGlobalRealTimeScanMode = useCallback((isRealTime: boolean) => {
@@ -213,18 +243,41 @@ export const ScanProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         if (exists) return prev;
         
         // Add new monitored ID
-        return [...prev, {
+        const newMonitoredId = {
           id: `monitor-${Date.now()}`,
           type,
           value,
           dateAdded: new Date().toISOString()
-        }];
+        };
+        
+        // Generate a notification for the new monitoring
+        addNotification({
+          type: 'monitoring',
+          title: 'Continuous Monitoring Activated',
+          message: `Continuous Monitoring activated for ${type}: ${maskSensitiveData(value, type)}. You will be alerted of any future breaches involving this ID.`,
+          severity: 'info',
+          relatedId: newMonitoredId.id,
+          relatedType: type,
+          relatedValue: value
+        });
+        
+        return [...prev, newMonitoredId];
       });
     } else {
       // Remove from monitored IDs
       setMonitoredIds(prev => prev.filter(item => !(item.type === type && item.value === value)));
+      
+      // Add a notification about monitoring being deactivated
+      addNotification({
+        type: 'monitoring',
+        title: 'Monitoring Stopped',
+        message: `Continuous monitoring has been disabled for ${type}: ${maskSensitiveData(value, type)}.`,
+        severity: 'info',
+        relatedType: type,
+        relatedValue: value
+      });
     }
-  }, []);
+  }, [addNotification]);
   
   // Check if an ID is being monitored
   const isIdMonitored = useCallback((type: string, value: string): boolean => {
@@ -402,7 +455,9 @@ export const ScanProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         useRealTimeScannedData,
         monitoredIds,
         toggleMonitoring,
-        isIdMonitored
+        isIdMonitored,
+        notifications,
+        addNotification
       }}
     >
       {children}
