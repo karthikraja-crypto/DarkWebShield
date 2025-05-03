@@ -1,3 +1,4 @@
+
 import React from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -5,10 +6,11 @@ import { Card, CardContent } from '@/components/ui/card';
 import SecurityScoreCard from '@/components/SecurityScoreCard';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { BarChart3, ShieldAlert, Bell, History, FileBarChart } from 'lucide-react';
+import { BarChart3, ShieldAlert, Bell, History, FileBarChart, AlertCircle, Database } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useScan } from '@/contexts/ScanContext';
 import DataSourceIndicator from '@/components/DataSourceIndicator';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -19,7 +21,11 @@ const Dashboard: React.FC = () => {
     securityScore,
     isRealData,
     hasNewNotification,
-    clearNotification
+    clearNotification,
+    isRealTimeScanMode,
+    useRealTimeScannedData,
+    displayNoRealTimeScansMessage,
+    hasRealTimeHistory
   } = useScan();
 
   // Navigate to the scan page
@@ -52,6 +58,16 @@ const Dashboard: React.FC = () => {
     }
     return new Date().toISOString();
   };
+
+  // Get filtered scan history based on mode
+  const getFilteredScanHistory = () => {
+    if (isRealTimeScanMode && hasRealTimeHistory) {
+      return scanHistory.filter(scan => scan.isRealScan);
+    }
+    return scanHistory;
+  };
+
+  const filteredScanHistory = getFilteredScanHistory();
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -87,6 +103,18 @@ const Dashboard: React.FC = () => {
               </button>
             </div>
           </div>
+
+          {isRealTimeScanMode && displayNoRealTimeScansMessage && (
+            <Alert variant="default" className="mb-6 bg-muted/30 border-muted flex items-center">
+              <Database className="h-4 w-4 text-muted-foreground" />
+              <AlertDescription className="text-sm">
+                Real-time scan mode is active but you haven't performed any real scans yet. 
+                <button onClick={handleNewScan} className="text-primary font-medium ml-1 hover:underline">
+                  Run a scan now
+                </button> to see real results.
+              </AlertDescription>
+            </Alert>
+          )}
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Security Score */}
@@ -207,6 +235,9 @@ const Dashboard: React.FC = () => {
                   <div className="flex items-center gap-2">
                     <History className="h-5 w-5" />
                     <h2 className="text-lg font-medium">Scan History</h2>
+                    {isRealTimeScanMode && hasRealTimeHistory && (
+                      <Badge variant="outline" className="ml-2">Real-Time Only</Badge>
+                    )}
                   </div>
                   <button
                     onClick={() => navigate('/results')}
@@ -216,9 +247,9 @@ const Dashboard: React.FC = () => {
                   </button>
                 </div>
 
-                {scanHistory.length > 0 ? (
+                {filteredScanHistory.length > 0 ? (
                   <div className="space-y-4">
-                    {scanHistory.slice(0, 3).map((scan) => (
+                    {filteredScanHistory.slice(0, 3).map((scan) => (
                       <div
                         key={scan.id}
                         className="flex items-center justify-between p-4 bg-card border rounded-lg"
@@ -229,6 +260,11 @@ const Dashboard: React.FC = () => {
                             {!scan.isRealScan && (
                               <Badge variant="secondary" className="text-xs">
                                 Sample
+                              </Badge>
+                            )}
+                            {scan.isRealScan && (
+                              <Badge variant="default" className="text-xs bg-cyber-primary">
+                                Real-Time
                               </Badge>
                             )}
                           </div>
@@ -255,7 +291,20 @@ const Dashboard: React.FC = () => {
                   </div>
                 ) : (
                   <div className="py-8 text-center">
-                    <p className="text-muted-foreground">No scan history available</p>
+                    {isRealTimeScanMode ? (
+                      <div className="flex flex-col items-center">
+                        <Database className="h-10 w-10 text-muted-foreground mb-2" />
+                        <p className="text-muted-foreground">No real-time scan history available</p>
+                        <button
+                          onClick={handleNewScan}
+                          className="mt-2 px-4 py-1 bg-primary text-primary-foreground text-sm rounded-md"
+                        >
+                          Run Your First Real-Time Scan
+                        </button>
+                      </div>
+                    ) : (
+                      <p className="text-muted-foreground">No scan history available</p>
+                    )}
                   </div>
                 )}
               </CardContent>

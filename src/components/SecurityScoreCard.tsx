@@ -55,7 +55,7 @@ const SecurityScoreCard: React.FC<SecurityScoreProps> = ({
   };
 
   return (
-    <Card className="cyber-card animate-pulse-glow">
+    <Card className="cyber-card">
       <CardHeader className="pb-2">
         <CardTitle className="text-xl">Security Score</CardTitle>
         <CardDescription>Your digital identity protection rating</CardDescription>

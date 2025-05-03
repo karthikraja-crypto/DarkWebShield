@@ -1,6 +1,8 @@
-import React, { createContext, useState, useContext, ReactNode, useCallback } from 'react';
+
+import React, { createContext, useState, useContext, ReactNode, useCallback, useEffect } from 'react';
 import { BreachData } from '@/components/BreachCard';
 import { Recommendation } from '@/components/RecommendationsList';
+import { toast } from 'sonner';
 
 // Define types for scan history and monitoring
 export interface ScanHistoryItem {
@@ -10,6 +12,7 @@ export interface ScanHistoryItem {
   value: string;
   breachesFound: number;
   isRealScan: boolean;
+  userEmail?: string; // Add reference to user email
 }
 
 export interface MonitoredId {
@@ -17,6 +20,7 @@ export interface MonitoredId {
   type: string;
   value: string;
   dateAdded: string;
+  userEmail?: string; // Add reference to user email
 }
 
 // Define notification types
@@ -31,6 +35,7 @@ export interface NotificationItem {
   relatedValue?: string;
   isRead: boolean;
   severity: 'low' | 'medium' | 'high' | 'info';
+  userEmail?: string; // Add reference to user email
 }
 
 // Sample breach data
@@ -116,7 +121,7 @@ interface ScanContextType {
   isRealData: boolean;
   isRealTimeScanMode: boolean;
   securityScore: number;
-  addRealScan: (scanType: string, value: string, foundBreaches: BreachData[], isRealScanRequest: boolean) => void;
+  addRealScan: (scanType: string, value: string, foundBreaches: BreachData[], isRealScanRequest: boolean, userEmail?: string) => void;
   setGlobalRealTimeScanMode: (isRealTime: boolean) => void;
   hasNewNotification: boolean;
   clearNotification: () => void;
@@ -124,10 +129,12 @@ interface ScanContextType {
   getLastScanInfo: () => {scanType: string, scanValue: string};
   useRealTimeScannedData: boolean;
   monitoredIds: MonitoredId[];
-  toggleMonitoring: (type: string, value: string, enabled: boolean) => void;
+  toggleMonitoring: (type: string, value: string, enabled: boolean, userEmail?: string) => void;
   isIdMonitored: (type: string, value: string) => boolean;
   notifications: NotificationItem[];
   addNotification: (notification: Omit<NotificationItem, 'id' | 'date' | 'isRead'>) => void;
+  displayNoRealTimeScansMessage: boolean;
+  hasRealTimeHistory: boolean;
 }
 
 // Create context
@@ -148,10 +155,59 @@ export const ScanProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   });
   const [monitoredIds, setMonitoredIds] = useState<MonitoredId[]>([]);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  const [displayNoRealTimeScansMessage, setDisplayNoRealTimeScansMessage] = useState<boolean>(false);
   
   // This state will control whether we show real scanned data or default to samples
   const [useRealTimeScannedData, setUseRealTimeScannedData] = useState<boolean>(false);
   
+  // Auto-disable real-time scanning after timeout
+  const REAL_TIME_SCAN_TIMEOUT = 30 * 60 * 1000; // 30 minutes
+  const [realTimeScanTimer, setRealTimeScanTimer] = useState<NodeJS.Timeout | null>(null);
+
+  // Check if we have any real-time scan history
+  const hasRealTimeHistory = scanHistory.some(scan => scan.isRealScan);
+  
+  // Setup auto-disable timer for real-time scanning
+  useEffect(() => {
+    if (isRealTimeScanMode) {
+      // Clear any existing timer
+      if (realTimeScanTimer) {
+        clearTimeout(realTimeScanTimer);
+      }
+      
+      // Set new timer
+      const timer = setTimeout(() => {
+        setIsRealTimeScanMode(false);
+        setUseRealTimeScannedData(false);
+        toast.info("Real-time scanning has been automatically disabled due to inactivity", {
+          duration: 5000
+        });
+        
+        // Add system notification about scan mode disabling
+        addNotification({
+          type: 'system',
+          title: 'Real-Time Scanning Disabled',
+          message: 'Real-time scanning has been automatically disabled after 30 minutes of inactivity.',
+          severity: 'info'
+        });
+        
+      }, REAL_TIME_SCAN_TIMEOUT);
+      
+      setRealTimeScanTimer(timer);
+    } else if (realTimeScanTimer) {
+      // Clear timer when real-time mode is disabled
+      clearTimeout(realTimeScanTimer);
+      setRealTimeScanTimer(null);
+    }
+    
+    // Cleanup on component unmount
+    return () => {
+      if (realTimeScanTimer) {
+        clearTimeout(realTimeScanTimer);
+      }
+    };
+  }, [isRealTimeScanMode]);
+
   // Add a new notification
   const addNotification = useCallback((notification: Omit<NotificationItem, 'id' | 'date' | 'isRead'>) => {
     const newNotification: NotificationItem = {
@@ -176,21 +232,48 @@ export const ScanProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setIsRealData(false);
       setSecurityScore(75);
       setUseRealTimeScannedData(false);
+      setDisplayNoRealTimeScansMessage(false);
+      
+      // Add notification about switching to sample mode
+      addNotification({
+        type: 'system',
+        title: 'Sample Data Mode',
+        message: 'Switched to sample data mode. All data displayed is for demonstration purposes only.',
+        severity: 'info'
+      });
     } else {
       // When switching to real-time mode, look for real scan data
       const realScans = scanHistory.filter(scan => scan.isRealScan);
       if (realScans.length > 0) {
         // We have real scan data, show it
         setUseRealTimeScannedData(true);
+        setDisplayNoRealTimeScansMessage(false);
+        
+        // Add notification about switching to real-time mode
+        addNotification({
+          type: 'system',
+          title: 'Real-Time Scan Mode',
+          message: 'Switched to real-time scan mode. All data displayed reflects actual scan results.',
+          severity: 'info'
+        });
       } else {
         // No real scan data yet, keep sample data until first scan
         setUseRealTimeScannedData(false);
+        setDisplayNoRealTimeScansMessage(true);
+        
+        // Add notification about no real-time data
+        addNotification({
+          type: 'system',
+          title: 'No Real-Time Data',
+          message: 'Real-time scan mode is active, but no real scans have been performed yet. Please run a scan to see real data.',
+          severity: 'info'
+        });
       }
     }
-  }, [scanHistory]);
+  }, [scanHistory, addNotification]);
 
   // Function to add a new real scan
-  const addRealScan = useCallback((scanType: string, value: string, foundBreaches: BreachData[], isRealScanRequest: boolean) => {
+  const addRealScan = useCallback((scanType: string, value: string, foundBreaches: BreachData[], isRealScanRequest: boolean, userEmail?: string) => {
     // Format the value for privacy (e.g., j***@example.com)
     const maskedValue = maskSensitiveData(value, scanType);
     
@@ -207,7 +290,8 @@ export const ScanProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       type: scanType,
       value: maskedValue,
       breachesFound: foundBreaches.length,
-      isRealScan: isRealScanRequest
+      isRealScan: isRealScanRequest,
+      userEmail: userEmail // Store the user email if provided
     };
     
     // Update scan history
@@ -220,6 +304,7 @@ export const ScanProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setIsRealData(true);
       setHasNewNotification(true);
       setUseRealTimeScannedData(true);
+      setDisplayNoRealTimeScansMessage(false);
       
       // Calculate new security score based on breaches
       const newScore = calculateSecurityScore(foundBreaches);
@@ -228,11 +313,24 @@ export const ScanProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       // Generate recommendations based on found breaches
       const newRecommendations = generateRecommendations(foundBreaches);
       setRecommendations(newRecommendations);
+      
+      // Add scan notification
+      addNotification({
+        type: 'scan',
+        title: `${scanType} Scan Completed`,
+        message: foundBreaches.length > 0 
+          ? `Your ${scanType.toLowerCase()} scan found ${foundBreaches.length} breaches. Review the results now.`
+          : `Your ${scanType.toLowerCase()} scan completed with no breaches found.`,
+        severity: foundBreaches.length > 0 ? 'high' : 'info',
+        relatedType: scanType,
+        relatedValue: value,
+        userEmail: userEmail // Include user email in notification if provided
+      });
     }
-  }, []);
+  }, [addNotification]);
 
   // Toggle monitoring for a specific ID
-  const toggleMonitoring = useCallback((type: string, value: string, enabled: boolean) => {
+  const toggleMonitoring = useCallback((type: string, value: string, enabled: boolean, userEmail?: string) => {
     if (!type || !value) return;
     
     if (enabled) {
@@ -247,7 +345,8 @@ export const ScanProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           id: `monitor-${Date.now()}`,
           type,
           value,
-          dateAdded: new Date().toISOString()
+          dateAdded: new Date().toISOString(),
+          userEmail: userEmail // Store the user email if provided
         };
         
         // Generate a notification for the new monitoring
@@ -258,7 +357,8 @@ export const ScanProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           severity: 'info',
           relatedId: newMonitoredId.id,
           relatedType: type,
-          relatedValue: value
+          relatedValue: value,
+          userEmail: userEmail // Include user email in notification if provided
         });
         
         return [...prev, newMonitoredId];
@@ -274,7 +374,8 @@ export const ScanProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         message: `Continuous monitoring has been disabled for ${type}: ${maskSensitiveData(value, type)}.`,
         severity: 'info',
         relatedType: type,
-        relatedValue: value
+        relatedValue: value,
+        userEmail: userEmail
       });
     }
   }, [addNotification]);
@@ -508,7 +609,9 @@ export const ScanProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         toggleMonitoring,
         isIdMonitored,
         notifications,
-        addNotification
+        addNotification,
+        displayNoRealTimeScansMessage,
+        hasRealTimeHistory
       }}
     >
       {children}

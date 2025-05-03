@@ -4,6 +4,7 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import GovernmentIDSection from '@/components/GovernmentIDSection';
 import ScanFormWrapper from '@/components/ScanFormWrapper';
+import RealTimeScanStatus from '@/components/RealTimeScanStatus';
 import { Shield, Search, Lock, FileText, Scan as ScanIcon, ShieldAlert } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import DataSourceIndicator from '@/components/DataSourceIndicator';
@@ -29,6 +30,7 @@ const Scan = () => {
               </p>
             </div>
             
+            <RealTimeScanStatus />
             <DataSourceIndicator />
 
             <Tabs defaultValue="personal" className="mb-12 mt-6">

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import ScanForm from '@/components/ScanForm';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -15,6 +16,9 @@ const MOCK_BREACH_DATABASE = {
   phones: ['5551234567', '5559876543', '5550001111'],
   usernames: ['admin123', 'testuser', 'johndoe']
 };
+
+// Mock user email (would come from authentication in a real app)
+const MOCK_USER_EMAIL = 'user@example.com';
 
 const ScanFormWrapper = () => {
   const { addRealScan, setGlobalRealTimeScanMode, isRealTimeScanMode } = useScan();
@@ -108,8 +112,8 @@ const ScanFormWrapper = () => {
       toast.success(successMessage);
     }
     
-    // Add the scan to our context with proper flag for real vs sample data
-    addRealScan(type, value, breaches, isRealTimeScan);
+    // Add the scan to our context with proper flag for real vs sample data and user email
+    addRealScan(type, value, breaches, isRealTimeScan, MOCK_USER_EMAIL);
     
     // Navigate to results
     navigate('/results');
@@ -152,6 +156,15 @@ const ScanFormWrapper = () => {
               <li>Phone: 5551234567</li>
               <li>Username: admin123</li>
             </ul>
+          </AlertDescription>
+        </Alert>
+      )}
+      
+      {isRealTimeScan && (
+        <Alert variant="destructive" className="bg-destructive/10 border-destructive/20">
+          <Lock className="h-4 w-4" />
+          <AlertDescription className="text-sm">
+            <span className="font-medium">Real-Time Scan Mode Active</span>: All scans will use real-time dark web scanning and results will be saved to your account.
           </AlertDescription>
         </Alert>
       )}
