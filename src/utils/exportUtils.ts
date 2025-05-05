@@ -1,6 +1,5 @@
-
 // Export functions for different report formats
-export type ExportFormat = 'csv' | 'pdf' | 'individual';
+export type ExportFormat = 'csv' | 'pdf' | 'individual' | 'word';
 
 interface ExportOptions {
   reportType?: 'standard' | 'detailed';
@@ -49,6 +48,11 @@ export const exportReport = (
         generateIndividualBreachReport(data[0], filename, userData, reportId);
       }
       break;
+    
+    case 'word':
+      // Export as Word document
+      generateWordDocument(data, filename, options, userData, reportId);
+      break;
       
     default:
       console.error(`Unsupported export format: ${format}`);
@@ -85,6 +89,16 @@ export const exportOverallReport = (
     recommendationsData, 
     historyData, 
     filename, 
+    userData,
+    reportId
+  );
+  
+  // Also generate a Word document version
+  generateComprehensiveWordDocument(
+    breachData,
+    recommendationsData,
+    historyData,
+    filename,
     userData,
     reportId
   );
@@ -360,4 +374,228 @@ function getBreachRecommendations(breach: any): string {
   } else {
     return 'Monitor account for unusual activity';
   }
+}
+
+/**
+ * Generate a Word document for export
+ */
+function generateWordDocument(
+  data: any[],
+  filename: string,
+  options: ExportOptions,
+  userData: any,
+  reportId: string
+) {
+  console.log(`Generating Word document with ${data.length} records`);
+  
+  // Create report content
+  let content = "";
+  content += "DarkWebShield – Breach Summary Report\n";
+  content += "===================================\n\n";
+  content += `Report ID: ${reportId}\n`;
+  content += `Generated: ${new Date().toLocaleString()}\n`;
+  content += `User: ${userData?.name || 'Unknown User'}\n\n`;
+  
+  // Add breach data table
+  content += "Breach Summary\n";
+  content += "--------------\n\n";
+  
+  // Add each breach
+  data.forEach((breach, index) => {
+    content += `Breach ${index + 1}: ${breach.title || breach.domain || 'Unknown Source'}\n`;
+    content += `Date: ${breach.breachDate ? new Date(breach.breachDate).toLocaleDateString() : 'Unknown'}\n`;
+    content += `Risk Level: ${breach.riskLevel?.toUpperCase() || 'UNKNOWN'}\n`;
+    content += `Affected Data: ${Array.isArray(breach.affectedData) ? breach.affectedData.join(', ') : 'Unknown'}\n`;
+    content += `Description: ${breach.description || 'No details available'}\n\n`;
+  });
+  
+  // Add security recommendations
+  content += "Security Recommendations\n";
+  content += "------------------------\n\n";
+  content += "1. Change passwords on all affected services\n";
+  content += "2. Enable two-factor authentication where available\n";
+  content += "3. Monitor accounts for suspicious activities\n";
+  content += "4. Use a password manager to generate and store strong passwords\n";
+  
+  // Create and download the Word document
+  downloadWordDocument(content, filename);
+}
+
+/**
+ * Generate a comprehensive Word document for export
+ */
+function generateComprehensiveWordDocument(
+  breachData: any[],
+  recommendationsData: any[],
+  historyData: any[],
+  filename: string,
+  userData: any,
+  reportId: string
+) {
+  console.log('Generating Comprehensive Word Document');
+  
+  // Create report content
+  let content = "";
+  content += "DarkWebShield – Comprehensive Security Report\n";
+  content += "===========================================\n\n";
+  content += `Report ID: ${reportId}\n`;
+  content += `Generated: ${new Date().toLocaleString()}\n`;
+  content += `User: ${userData?.name || 'Unknown User'}\n`;
+  content += `Email: ${userData?.email || 'Unknown Email'}\n\n`;
+  
+  // Executive Summary
+  content += "Executive Summary\n";
+  content += "----------------\n\n";
+  content += `Total Breaches: ${breachData.length}\n`;
+  content += `Scan Count: ${historyData.length}\n`;
+  content += `Risk Level: ${calculateOverallRisk(breachData)}\n\n`;
+  
+  // Scan History
+  content += "Scan History\n";
+  content += "-----------\n\n";
+  historyData.forEach((scan, index) => {
+    content += `Scan ${index + 1}: ${scan.type} - ${scan.value}\n`;
+    content += `Date: ${new Date(scan.date).toLocaleDateString()}\n`;
+    content += `Breaches Found: ${scan.breachesFound}\n`;
+    content += `${scan.isRealScan ? 'Real-Time Scan' : 'Sample Scan'}\n\n`;
+  });
+  
+  // Detailed Breach Data
+  content += "Detailed Breach Data\n";
+  content += "------------------\n\n";
+  breachData.forEach((breach, index) => {
+    content += `Breach ${index + 1}: ${breach.Title || breach.Domain || 'Unknown Source'}\n`;
+    content += `Date: ${breach.Date || 'Unknown'}\n`;
+    content += `Risk Level: ${breach.Risk || 'UNKNOWN'}\n`;
+    content += `Affected Data: ${breach.AffectedData || 'Unknown'}\n`;
+    content += `Description: ${breach.Description || 'No details available'}\n\n`;
+  });
+  
+  // Recommendations
+  content += "Security Recommendations\n";
+  content += "------------------------\n\n";
+  recommendationsData.forEach((rec, index) => {
+    content += `${index + 1}. ${rec.Title}\n`;
+    content += `   Priority: ${rec.Priority.toUpperCase()}\n`;
+    content += `   Status: ${rec.Status}\n`;
+    content += `   ${rec.Description}\n\n`;
+  });
+  
+  // Security Tips
+  content += "Security Tips & Monitoring Summary\n";
+  content += "--------------------------------\n\n";
+  content += "1. Use unique passwords for all accounts\n";
+  content += "2. Enable two-factor authentication wherever possible\n";
+  content += "3. Regularly monitor your accounts for suspicious activity\n";
+  content += "4. Consider using a password manager\n";
+  content += "5. Be cautious of phishing attempts\n\n";
+  content += "Your account is being actively monitored for new breaches. You will be notified immediately if your data appears in any new leaks.\n";
+  
+  // Create and download the Word document
+  downloadWordDocument(content, filename);
+}
+
+/**
+ * Download a Word document
+ */
+function downloadWordDocument(content: string, filename: string) {
+  // Create a blob with Word document MIME type
+  // For a simple approach, we'll create a document with basic formatting
+  // In a real implementation, you would use a library like docx-js to create proper Word documents
+  
+  // Header for MS Word document (XML format)
+  const header = `
+<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+<head>
+<meta charset="utf-8">
+<title>DarkWebShield Report</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    line-height: 1.5;
+  }
+  h1, h2, h3 {
+    color: #333366;
+  }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+  }
+  th, td {
+    border: 1px solid #dddddd;
+    padding: 8px;
+    text-align: left;
+  }
+  th {
+    background-color: #f2f2f2;
+  }
+  .header {
+    text-align: center;
+    margin-bottom: 30px;
+  }
+  .section {
+    margin-top: 20px;
+    margin-bottom: 20px;
+  }
+</style>
+</head>
+<body>
+`;
+
+  // Format content with HTML
+  let htmlContent = header;
+  
+  // Replace plain text formatting with HTML
+  const formattedContent = content
+    .replace(/DarkWebShield – (.*?)(?:\n)/g, '<div class="header"><h1>DarkWebShield – $1</h1></div>')
+    .replace(/={3,}/g, '')
+    .replace(/-([-]+)/g, '')
+    .replace(/^(.+?):\s*(.*?)$/gm, '<strong>$1:</strong> $2<br>')
+    .replace(/^(.*?)\n\n/gm, '<p>$1</p>')
+    .replace(/^([A-Za-z].*?)\n([^A-Za-z])/gm, '<h2>$1</h2>$2');
+  
+  htmlContent += formattedContent;
+  htmlContent += `</body></html>`;
+  
+  // Add MS Word specific metadata to make it open in Word
+  const wordDocumentPrefix = 
+    `<html xmlns:o="urn:schemas-microsoft-com:office:office" 
+      xmlns:w="urn:schemas-microsoft-com:office:word" 
+      xmlns="http://www.w3.org/TR/REC-html40">
+      <head>
+      <meta charset="utf-8">
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+      <!--[if gte mso 9]>
+      <xml>
+      <w:WordDocument>
+      <w:View>Print</w:View>
+      <w:Zoom>90</w:Zoom>
+      <w:DoNotOptimizeForBrowser/>
+      </w:WordDocument>
+      </xml>
+      <![endif]-->
+      <style>
+      @page {
+        size: 8.5in 11.0in;
+        margin: 1.0in 1.25in 1.0in 1.25in;
+        mso-header-margin: .5in;
+        mso-footer-margin: .5in;
+        mso-paper-source: 0;
+      }
+      </style>
+      </head>
+      `;
+  
+  const wordContent = wordDocumentPrefix + htmlContent.substring(htmlContent.indexOf('<body>'));
+  
+  // Create blob and download
+  const blob = new Blob([wordContent], { type: 'application/vnd.ms-word' });
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.setAttribute('hidden', '');
+  a.setAttribute('href', url);
+  a.setAttribute('download', `${filename}.doc`);
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
 }

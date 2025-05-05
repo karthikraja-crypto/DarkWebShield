@@ -160,6 +160,12 @@ const ExportButton = ({
             Export Overall Report with History
           </DropdownMenuItem>
         )}
+        {showOverallReport && (
+          <DropdownMenuItem onClick={() => handleExport('word', true)}>
+            <Download className="mr-2 h-4 w-4" />
+            Export as Word Document (.doc)
+          </DropdownMenuItem>
+        )}
         {data.length === 1 && (
           <DropdownMenuItem onClick={() => handleExport('individual')}>
             <Download className="mr-2 h-4 w-4" />
@@ -173,6 +179,10 @@ const ExportButton = ({
         <DropdownMenuItem onClick={() => handleExport('pdf')}>
           <Download className="mr-2 h-4 w-4" />
           Export as PDF
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => handleExport('word')}>
+          <Download className="mr-2 h-4 w-4" />
+          Export as Word
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

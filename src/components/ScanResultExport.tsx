@@ -77,7 +77,7 @@ const ScanResultExport = ({
           <div className="bg-cyber-dark/20 p-4 rounded-md">
             <h3 className="text-sm font-medium mb-2">Individual Formats</h3>
             <p className="text-sm text-muted-foreground">
-              Export as CSV for data manipulation, PDF for a professionally formatted report, or detailed individual breach reports.
+              Export as CSV for data manipulation, PDF for a professionally formatted report, Word document for editing, or detailed individual breach reports.
             </p>
             
             {results.length === 1 && (
