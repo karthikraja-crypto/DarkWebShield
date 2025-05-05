@@ -12,6 +12,8 @@ import { useScan } from '@/contexts/ScanContext';
 import DataSourceIndicator from '@/components/DataSourceIndicator';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import RealTimeScanStatus from '@/components/RealTimeScanStatus';
+import { toast } from 'sonner';
+import { exportOverallReport } from '@/utils/exportUtils';
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -40,6 +42,11 @@ const Dashboard: React.FC = () => {
     navigate('/notifications');
   };
 
+  // Navigate to results page with scan history view
+  const handleViewAllHistory = () => {
+    navigate('/results');
+  };
+
   // Calculate risk factor based on security score and breaches
   const calculateRiskFactor = (): 'high' | 'medium' | 'low' => {
     // Check for high risk breaches first
@@ -66,6 +73,44 @@ const Dashboard: React.FC = () => {
       return scanHistory.filter(scan => scan.isRealScan);
     }
     return scanHistory;
+  };
+
+  // Generate overall report from scan history
+  const handleGenerateOverallReport = () => {
+    const reportPrefix = isRealTimeScanMode ? 'real-time-scan' : 'darkwebshield-scan';
+    toast.info('Generating comprehensive security report with scan history...');
+    
+    // Prepare data from scan history
+    const scanHistoryData = getFilteredScanHistory().map(scan => ({
+      date: scan.date,
+      type: scan.type,
+      value: scan.value,
+      breachesFound: scan.breachesFound,
+      isRealScan: scan.isRealScan
+    }));
+    
+    // Prepare the report data from breaches
+    const reportData = breaches.map(breach => ({
+      Title: breach.title,
+      Domain: breach.domain,
+      Date: new Date(breach.breachDate).toLocaleDateString(),
+      Risk: breach.riskLevel.toUpperCase(),
+      AffectedData: breach.affectedData.join(', '),
+      Description: breach.description
+    }));
+    
+    // Prepare recommendations data
+    const recommendationsData = recommendations.map(rec => ({
+      Title: rec.title,
+      Priority: rec.priority,
+      Status: 'Pending',
+      Description: rec.description
+    }));
+    
+    setTimeout(() => {
+      exportOverallReport(reportData, recommendationsData, scanHistoryData, reportPrefix + '-history-report');
+      toast.success('Comprehensive security report with scan history has been generated and downloaded');
+    }, 1000);
   };
 
   const filteredScanHistory = getFilteredScanHistory();
@@ -224,7 +269,22 @@ const Dashboard: React.FC = () => {
                                   {recommendation.description}
                                 </p>
                               </div>
-                              <button className="text-sm text-primary hover:underline">
+                              <button 
+                                className="text-sm text-primary hover:underline"
+                                onClick={() => {
+                                  // Create a RecommendationsList component instance to access its methods
+                                  const recList = document.createElement('div');
+                                  document.body.appendChild(recList);
+                                  const event = new CustomEvent('view-recommendation-steps', { 
+                                    detail: { recommendation } 
+                                  });
+                                  recList.dispatchEvent(event);
+                                  document.body.removeChild(recList);
+                                  
+                                  // Navigate to results page which has the RecommendationsList component
+                                  navigate('/results');
+                                }}
+                              >
                                 View Steps
                               </button>
                             </div>
@@ -252,7 +312,7 @@ const Dashboard: React.FC = () => {
                       )}
                     </div>
                     <button
-                      onClick={() => navigate('/results')}
+                      onClick={handleViewAllHistory}
                       className="text-sm text-primary hover:underline"
                     >
                       View All
@@ -335,7 +395,7 @@ const Dashboard: React.FC = () => {
                   </p>
 
                   <button
-                    onClick={() => navigate('/results')}
+                    onClick={handleGenerateOverallReport}
                     className="w-full px-4 py-2 bg-primary/10 text-primary border border-primary/20 rounded-md hover:bg-primary/20 transition-colors"
                   >
                     Generate Report

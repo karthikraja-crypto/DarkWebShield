@@ -62,21 +62,26 @@ const ExportButton = ({
         
         // Process data for export - convert objects to structured format
         const processedData = data.map(item => ({
-          Title: item.title || item.domain || 'Unknown',
+          Title: item.title || item.domain || item.BreachName || 'Unknown',
           Domain: item.domain || 'Unknown',
-          Date: item.breachDate ? new Date(item.breachDate).toLocaleDateString() : 'Unknown',
-          Risk: (item.riskLevel || 'medium').toUpperCase(),
-          AffectedData: Array.isArray(item.affectedData) ? item.affectedData.join(', ') : (item.affectedData || 'Unknown'),
-          Description: item.description || 'No detailed information available'
+          Date: item.breachDate ? new Date(item.breachDate).toLocaleDateString() : (item.BreachDate ? new Date(item.BreachDate).toLocaleDateString() : 'Unknown'),
+          Risk: (item.riskLevel || item.Severity || 'medium').toUpperCase(),
+          AffectedData: Array.isArray(item.affectedData) ? item.affectedData.join(', ') : (item.AffectedData || item.affectedData || 'Unknown'),
+          Description: item.description || item.Description || 'No detailed information available'
         }));
         
         // Process recommendations data
         const processedRecommendations = recommendationsData.map(rec => ({
-          Title: rec.title || 'Unknown',
-          Priority: rec.priority || 'medium',
+          Title: rec.title || rec.Title || 'Unknown',
+          Priority: rec.priority || rec.Priority || 'medium',
           Status: rec.completed ? 'Completed' : 'Pending',
-          Description: rec.description || ''
+          Description: rec.description || rec.Description || ''
         }));
+        
+        // Process history data if available
+        const processedHistoryData = historyData && historyData.length > 0 
+          ? historyData 
+          : [];
         
         const filename = isRealTimeScanMode 
           ? `real-time-security-report-${Date.now()}` 
@@ -86,10 +91,10 @@ const ExportButton = ({
         exportOverallReport(
           processedData, 
           processedRecommendations, 
-          historyData, 
+          processedHistoryData, 
           filename
         );
-        toast.success('Comprehensive security report exported successfully');
+        toast.success('Comprehensive security report with scan history exported successfully');
       } else {
         // Process data for standard export
         const processedData = data.map(item => {
@@ -143,10 +148,7 @@ const ExportButton = ({
           ) : (
             <>
               <FileText className="mr-2 h-4 w-4" />
-              {isRealTimeScanMode 
-                ? (showOverallReport ? 'Real-Time Report' : 'Export Report') 
-                : (showOverallReport ? 'Overall Report' : 'Export Report')
-              }
+              {showOverallReport ? 'Export Report' : 'Export'}
             </>
           )}
         </Button>
@@ -155,13 +157,13 @@ const ExportButton = ({
         {showOverallReport && (
           <DropdownMenuItem onClick={() => handleExport('pdf', true)}>
             <Download className="mr-2 h-4 w-4" />
-            {isRealTimeScanMode ? 'Export Real-Time Overall Report' : 'Export Overall Report'}
+            Export Overall Report with History
           </DropdownMenuItem>
         )}
         {data.length === 1 && (
           <DropdownMenuItem onClick={() => handleExport('individual')}>
             <Download className="mr-2 h-4 w-4" />
-            {isRealTimeScanMode ? 'Real-Time Breach Report' : 'Individual Breach Report'}
+            Individual Breach Report
           </DropdownMenuItem>
         )}
         <DropdownMenuItem onClick={() => handleExport('csv')}>

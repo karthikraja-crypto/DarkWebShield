@@ -77,45 +77,6 @@ const Results = () => {
     return scanHistory[0].type;
   };
 
-  const handleGenerateOverallReport = () => {
-    const reportPrefix = isRealTimeScanMode ? 'real-time-scan' : 'darkwebshield-scan';
-    toast.info('Generating comprehensive security report...');
-    
-    // Prepare the report data
-    const reportData = breaches.map(breach => ({
-      Title: breach.title,
-      Domain: breach.domain,
-      Date: new Date(breach.breachDate).toLocaleDateString(),
-      Risk: breach.riskLevel.toUpperCase(),
-      AffectedData: breach.affectedData.join(', '),
-      Description: breach.description
-    }));
-    
-    // Prepare recommendations data
-    const recommendationsData = recommendations.map(rec => ({
-      Title: rec.title,
-      Priority: rec.priority,
-      Status: 'Pending',
-      Description: rec.description
-    }));
-    
-    // Use real scan history data if in real-time mode
-    const relevantScanHistory = isRealTimeScanMode 
-      ? scanHistory.filter(scan => scan.isRealScan)
-      : scanHistory;
-      
-    // Process scan history data
-    const scanHistoryData = relevantScanHistory.map(scan => ({
-      date: scan.date,
-      breachesFound: scan.breachesFound
-    }));
-    
-    setTimeout(() => {
-      exportOverallReport(reportData, recommendationsData, scanHistoryData, reportPrefix + '-results');
-      toast.success('Comprehensive security report has been generated and downloaded');
-    }, 1000);
-  };
-
   // Calculate risk factor based on security score and breaches
   const calculateRiskFactor = (): 'high' | 'medium' | 'low' => {
     // Check for high risk breaches first
@@ -159,7 +120,7 @@ const Results = () => {
       
       <main className="flex-1 py-10">
         <div className="container mx-auto px-4">
-          <div className="mb-8 flex justify-between items-center">
+          <div className="mb-8">
             <div>
               <h1 className="text-3xl font-bold mb-2 flex items-center">
                 {isRealTimeScanMode ? 'Real-Time Scan Results' : 'Scan Results'}
@@ -171,14 +132,6 @@ const Results = () => {
                 }
               </p>
             </div>
-            <Button 
-              variant="outline" 
-              className="text-cyber-primary border-cyber-primary/30"
-              onClick={handleGenerateOverallReport}
-            >
-              <FileText className="mr-2 h-4 w-4" />
-              {isRealTimeScanMode ? 'Export Real-Time Report' : 'Export Report'}
-            </Button>
           </div>
           
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mt-6">
@@ -265,7 +218,7 @@ const Results = () => {
                 lastScanDate={getLastScanDate()}
                 riskFactor={calculateRiskFactor()}
               />
-              <RecommendationsList recommendations={recommendations} />
+              <RecommendationsList recommendations={recommendations} onComplete={undefined} />
               
               {/* Continuous Monitoring Toggle - Now here between recommendations and export */}
               {scanType && scanValue && (

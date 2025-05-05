@@ -22,7 +22,16 @@ const ScanResultExport = ({
   scanValue = '',
   className 
 }: ScanResultExportProps) => {
-  const { isIdMonitored } = useScan();
+  const { isIdMonitored, scanHistory } = useScan();
+
+  // Extract scan history data to include in reports
+  const scanHistoryForReport = scanHistory.map(scan => ({
+    date: scan.date,
+    type: scan.type,
+    value: scan.value,
+    breachesFound: scan.breachesFound,
+    isRealScan: scan.isRealScan
+  }));
 
   return (
     <Card className={`cyber-card ${className || ''}`}>
@@ -32,7 +41,7 @@ const ScanResultExport = ({
           <ExportButton 
             data={results} 
             recommendationsData={recommendationsData}
-            historyData={historyData}
+            historyData={scanHistoryForReport}
             variant="outline" 
             className="border-cyber-primary/50 text-cyber-primary hover:bg-cyber-primary/10"
             showOverallReport={results.length > 0}
@@ -59,7 +68,7 @@ const ScanResultExport = ({
                   <p>• Detailed records of each detected breach</p>
                   <p>• Risk Analysis with affected services</p>
                   <p>• Personalized Security Recommendations</p>
-                  <p>• Monitoring & Alerts Summary</p>
+                  <p>• Complete Scan History & Monitoring Summary</p>
                 </AccordionContent>
               </AccordionItem>
             </Accordion>

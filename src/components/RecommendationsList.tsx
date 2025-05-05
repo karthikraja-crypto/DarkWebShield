@@ -122,6 +122,17 @@ const RecommendationsList: React.FC<RecommendationsListProps> = ({ recommendatio
                       </Badge>
                     </div>
                     <p className="text-sm text-muted-foreground">{recommendation.description}</p>
+                    <div className="mt-2">
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRecommendationClick(recommendation);
+                        }}
+                        className="text-xs text-cyber-primary hover:underline"
+                      >
+                        View Steps
+                      </button>
+                    </div>
                   </div>
                 </div>
               </li>
